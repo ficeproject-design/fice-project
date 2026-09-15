@@ -1,0 +1,287 @@
+{
+    "services":  [
+                     {
+                         "id":  "srv-shoes-deepclean",
+                         "category":  "shoes",
+                         "name":  "Deep Clean Shoes",
+                         "description":  "Pembersihan menyeluruh bagian luar, midsole, insole, outsole, dan tali sepatu.",
+                         "estimatedDays":  "2 - 3 Hari",
+                         "price":  65000,
+                         "popular":  true
+                     },
+                     {
+                         "id":  "srv-shoes-suede",
+                         "category":  "shoes",
+                         "name":  "Special Treatment - Suede",
+                         "description":  "Perawatan material khusus Suede \u0026 Nubuck dengan sabun khusus agar bulu halus tetap lembut dan tidak kaku.",
+                         "estimatedDays":  "3 Hari",
+                         "price":  75000
+                     },
+                     {
+                         "id":  "srv-shoes-leather",
+                         "category":  "shoes",
+                         "name":  "Special Treatment - Leather / Kulit",
+                         "description":  "Pembersihan dan conditioning kulit asli/sintetis untuk menjaga kelembapan serta mencegah kerutan dan pecah.",
+                         "estimatedDays":  "3 Hari",
+                         "price":  90000
+                     },
+                     {
+                         "id":  "srv-shoes-kids",
+                         "category":  "shoes",
+                         "name":  "Little One Care (Kids Shoes)",
+                         "description":  "Pembersihan higienis khusus sepatu anak dengan formula ramah anak dan anti-bakteri.",
+                         "estimatedDays":  "2 - 3 Hari",
+                         "price":  40000
+                     },
+                     {
+                         "id":  "srv-shoes-womens",
+                         "category":  "shoes",
+                         "name":  "Womens Care",
+                         "description":  "Deep clean untuk Heels, Wedges, dan Flat shoes.",
+                         "estimatedDays":  "2 - 3 Hari",
+                         "price":  45000
+                     },
+                     {
+                         "id":  "srv-bag-small",
+                         "category":  "bag",
+                         "name":  "Bag Deep Clean (Small)",
+                         "description":  "Pembersihan tas ukuran kecil (clutch, waist bag, mini sling bag).",
+                         "estimatedDays":  "3 - 4 Hari",
+                         "price":  65000
+                     },
+                     {
+                         "id":  "srv-bag-medium",
+                         "category":  "bag",
+                         "name":  "Bag Deep Clean (Medium)",
+                         "description":  "Pembersihan tas ukuran sedang (backpack standar, shoulder bag, tote bag).",
+                         "estimatedDays":  "3 - 4 Hari",
+                         "price":  85000,
+                         "popular":  true
+                     },
+                     {
+                         "id":  "srv-bag-large",
+                         "category":  "bag",
+                         "name":  "Bag Deep Clean (Large)",
+                         "description":  "Pembersihan tas ukuran besar (travel bag, duffel, backpack gunung, tote bag besar).",
+                         "estimatedDays":  "3 - 4 Hari",
+                         "price":  110000
+                     },
+                     {
+                         "id":  "srv-acc-deepclean",
+                         "category":  "accessories",
+                         "name":  "Hat, Wallet \u0026 Pouch Deep Clean",
+                         "description":  "Pembersihan menyeluruh untuk topi (snapback/baseball), dompet, atau pouch kosmetik/gadget.",
+                         "estimatedDays":  "2 - 3 Hari",
+                         "price":  30000
+                     }
+                 ],
+    "customers":  [
+                      {
+                          "id":  "cust-1",
+                          "name":  "Dimas Prasetyo",
+                          "phone":  "081298765432",
+                          "address":  "Jl. Kemang Timur No. 42, RT 03/RW 04",
+                          "district":  "Mampang Prapatan",
+                          "city":  "Jakarta Selatan",
+                          "latitude":  -6.2625,
+                          "longitude":  106.8228,
+                          "notes":  "Pagar abu-abu sebelah toko bunga",
+                          "totalOrders":  2,
+                          "lastOrderAt":  "2026-09-12T10:00:00.000Z",
+                          "createdAt":  "2026-09-01T09:00:00.000Z"
+                      },
+                      {
+                          "id":  "cust-2",
+                          "name":  "Alya Safitri",
+                          "phone":  "081377889900",
+                          "address":  "Cluster Foresta Blok B7 No. 15, BSD City",
+                          "district":  "Serpong",
+                          "city":  "Tangerang Selatan",
+                          "latitude":  -6.3015,
+                          "longitude":  106.6542,
+                          "notes":  "Dekat pos satpam gerbang utama",
+                          "totalOrders":  1,
+                          "lastOrderAt":  "2026-09-13T11:30:00.000Z",
+                          "createdAt":  "2026-09-13T11:30:00.000Z"
+                      }
+                  ],
+    "orders":  [
+                   {
+                       "id":  "ord-101",
+                       "invoiceNumber":  "INV-202609-0001",
+                       "customer":  {
+                                        "id":  "cust-1",
+                                        "name":  "Dimas Prasetyo",
+                                        "phone":  "081298765432",
+                                        "address":  "Jl. Kemang Timur No. 42, RT 03/RW 04",
+                                        "district":  "Mampang Prapatan",
+                                        "city":  "Jakarta Selatan",
+                                        "latitude":  -6.2625,
+                                        "longitude":  106.8228,
+                                        "notes":  "Pagar abu-abu sebelah toko bunga",
+                                        "totalOrders":  2,
+                                        "lastOrderAt":  "2026-09-12T10:00:00.000Z",
+                                        "createdAt":  "2026-09-01T09:00:00.000Z"
+                                    },
+                       "items":  [
+                                     {
+                                         "id":  "item-1",
+                                         "serviceId":  "srv-shoes-deepclean",
+                                         "serviceName":  "Deep Clean Shoes",
+                                         "category":  "shoes",
+                                         "price":  65000,
+                                         "quantity":  2,
+                                         "itemNotes":  "Nike Air Jordan 1 Low \u0026 Adidas Samba Putih"
+                                     },
+                                     {
+                                         "id":  "item-2",
+                                         "serviceId":  "srv-acc-deepclean",
+                                         "serviceName":  "Hat, Wallet \u0026 Pouch Deep Clean",
+                                         "category":  "accessories",
+                                         "price":  30000,
+                                         "quantity":  1,
+                                         "itemNotes":  "Topi New Era Yankees Hitam"
+                                     }
+                                 ],
+                       "pickupDate":  "2026-09-12",
+                       "pickupSlot":  "morning",
+                       "status":  "COMPLETED",
+                       "paymentModel":  "MODEL_B",
+                       "paymentStatus":  "PAID",
+                       "paymentMethod":  "QRIS",
+                       "distanceKm":  12.4,
+                       "pickupFee":  0,
+                       "subtotal":  160000,
+                       "totalAmount":  160000,
+                       "qcPhotos":  [
+                                        {
+                                            "id":  "qc-1",
+                                            "type":  "BEFORE",
+                                            "photoUrl":  "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600\u0026auto=format\u0026fit=crop\u0026q=80",
+                                            "notes":  "Midsole berdebu tebal dan outsole ada noda tanah kering.",
+                                            "createdAt":  "2026-09-12T14:10:00.000Z"
+                                        },
+                                        {
+                                            "id":  "qc-2",
+                                            "type":  "AFTER",
+                                            "photoUrl":  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600\u0026auto=format\u0026fit=crop\u0026q=80",
+                                            "notes":  "Selesai deep clean, wangi bubblegum dan sudah kering sempurna.",
+                                            "createdAt":  "2026-09-13T09:30:00.000Z"
+                                        }
+                                    ],
+                       "notes":  "Tolong jemput sebelum jam 12 siang ya.",
+                       "createdAt":  "2026-09-12T08:30:00.000Z",
+                       "updatedAt":  "2026-09-13T10:00:00.000Z",
+                       "paidAt":  "2026-09-12T15:00:00.000Z"
+                   },
+                   {
+                       "id":  "ord-102",
+                       "invoiceNumber":  "INV-202609-0002",
+                       "customer":  {
+                                        "id":  "cust-2",
+                                        "name":  "Alya Safitri",
+                                        "phone":  "081377889900",
+                                        "address":  "Cluster Foresta Blok B7 No. 15, BSD City",
+                                        "district":  "Serpong",
+                                        "city":  "Tangerang Selatan",
+                                        "latitude":  -6.3015,
+                                        "longitude":  106.6542,
+                                        "notes":  "Dekat pos satpam gerbang utama",
+                                        "totalOrders":  1,
+                                        "lastOrderAt":  "2026-09-13T11:30:00.000Z",
+                                        "createdAt":  "2026-09-13T11:30:00.000Z"
+                                    },
+                       "items":  [
+                                     {
+                                         "id":  "item-3",
+                                         "serviceId":  "srv-bag-medium",
+                                         "serviceName":  "Bag Deep Clean (Medium)",
+                                         "category":  "bag",
+                                         "price":  85000,
+                                         "quantity":  1,
+                                         "itemNotes":  "Tas Ransel Fjallraven Kanken Kuning"
+                                     },
+                                     {
+                                         "id":  "item-4",
+                                         "serviceId":  "srv-shoes-suede",
+                                         "serviceName":  "Special Treatment - Suede",
+                                         "category":  "shoes",
+                                         "price":  75000,
+                                         "quantity":  1,
+                                         "itemNotes":  "Vans Old Skool Suede Navy"
+                                     }
+                                 ],
+                       "pickupDate":  "2026-09-14",
+                       "pickupSlot":  "morning",
+                       "status":  "WAITING_PICKUP",
+                       "paymentModel":  "MODEL_C",
+                       "paymentStatus":  "UNPAID",
+                       "paymentMethod":  "COD",
+                       "distanceKm":  9.8,
+                       "pickupFee":  0,
+                       "subtotal":  160000,
+                       "totalAmount":  160000,
+                       "qcPhotos":  [
+
+                                    ],
+                       "notes":  "Taruh di titip satpam jika saya belum pulang kerja.",
+                       "createdAt":  "2026-09-13T11:30:00.000Z",
+                       "updatedAt":  "2026-09-13T11:30:00.000Z"
+                   }
+               ],
+    "settings":  {
+                     "workshopName":  "Fice Shoes Care",
+                     "workshopAddress":  "Pondok Aren, Tangerang Selatan",
+                     "workshopCity":  "Kota Tangerang Selatan",
+                     "workshopLat":  -6.2566723933990183,
+                     "workshopLng":  106.72384418262801,
+                     "adminPhone":  "081298765432",
+                     "freeRadiusKm":  20,
+                     "minItemsBeyondRadius":  3,
+                     "cutoffHour":  13,
+                     "bankAccountInfo":  "BCA 8830-1234-5678 a.n. Fice Shoes Care"
+                 },
+    "promos": [
+         {
+             "id": "promo-1",
+             "code": "FICEBARU",
+             "discountType": "PERCENT",
+             "discountValue": 15,
+             "minOrderAmount": 65000,
+             "maxDiscount": 25000,
+             "validUntil": "2026-12-31",
+             "usageLimit": 100,
+             "usedCount": 8,
+             "isActive": true,
+             "description": "Diskon 15% untuk pelanggan baru Fice Shoes Care (Maks. Rp 25.000, Min. Order Rp 65.000)",
+             "createdAt": "2026-09-01T00:00:00.000Z"
+         },
+         {
+             "id": "promo-2",
+             "code": "BERSIH10K",
+             "discountType": "FIXED",
+             "discountValue": 10000,
+             "minOrderAmount": 65000,
+             "validUntil": "2026-12-31",
+             "usageLimit": 50,
+             "usedCount": 14,
+             "isActive": true,
+             "description": "Potongan langsung Rp 10.000 untuk deep clean sepatu & tas (Min. Order Rp 65.000)",
+             "createdAt": "2026-09-01T00:00:00.000Z"
+         },
+         {
+             "id": "promo-3",
+             "code": "SUPERCARE",
+             "discountType": "PERCENT",
+             "discountValue": 20,
+             "minOrderAmount": 120000,
+             "maxDiscount": 35000,
+             "validUntil": "2026-12-31",
+             "usageLimit": 30,
+             "usedCount": 5,
+             "isActive": true,
+             "description": "Diskon 20% khusus perawatan 2 pasang sepatu atau lebih (Min. Order Rp 120.000)",
+             "createdAt": "2026-09-01T00:00:00.000Z"
+         }
+     ]
+}
