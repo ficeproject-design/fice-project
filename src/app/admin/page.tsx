@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
               {formatRupiah(summary.pendingRevenue)}
             </span>
             <span className="text-xs text-slate-500 mt-1 block">
-              Tagihan Model B / C yang belum ditagih
+              Nilai pesanan yang belum dibayar pelanggan
             </span>
           </div>
         </div>

@@ -46,10 +46,9 @@ export function buildOrderConfirmationMessage(
     )
     .join('\n');
 
-  const paymentModelText =
-    order.paymentModel === 'MODEL_B'
-      ? 'Model B (Bayar setelah verifikasi kondisi sepatu di workshop)'
-      : 'Model C (Bayar setelah cuci selesai sebelum antar / COD)';
+  const paymentText = settings.bankAccountInfo
+    ? `Transfer Bank. Tagihan terbit setelah sepatu diverifikasi di workshop. Rekening: ${settings.bankAccountInfo}`
+    : 'Transfer Bank ke rekening resmi Fice Shoes Care. Tagihan terbit setelah sepatu diverifikasi di workshop.';
 
   const promoText =
     order.promoCode && order.discountAmount && order.discountAmount > 0
@@ -70,7 +69,7 @@ Berikut rincian pesanan Anda:
 ${itemsText}${promoText}
 
 💰 *Total Pembayaran:* *${formatRupiah(order.totalAmount)}*
-💳 *Metode Bayar:* ${paymentModelText}
+💳 *Metode Bayar:* ${paymentText}
 ━━━━━━━━━━━━━━━━━━━━
 
 🔎 *Lacak Status & Cek Invoice:*

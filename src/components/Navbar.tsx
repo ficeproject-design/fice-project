@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -68,10 +68,16 @@ export default function Navbar() {
               Tentang
             </Link>
             <Link
-              href="/#layanan"
+              href="/harga"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
               Harga
+            </Link>
+            <Link
+              href="/testimoni"
+              className="hover:text-[#f06a60] transition-colors leading-none"
+            >
+              Testimoni
             </Link>
             <Link
               href="/#cara-kerja"
@@ -135,49 +141,49 @@ export default function Navbar() {
 
                   <div className="flex flex-col space-y-2.5">
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Deep Clean Shoes
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Special Treatment Suede
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Special Treatment Leather
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Little One Care (Kids Shoes)
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Womens Care (Heels &amp; Flats)
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Bag Deep Clean
                     </Link>
                     <Link
-                      href="/#layanan"
+                      href="/harga"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
@@ -188,7 +194,7 @@ export default function Navbar() {
 
                 <div className="pt-6">
                   <Link
-                    href="/#layanan"
+                    href="/harga"
                     onClick={() => setServicesOpen(false)}
                     className="inline-flex items-center gap-2 text-sm sm:text-base font-heading font-bold tracking-normal uppercase px-6 py-3 rounded-full bg-[#f2ece5] hover:bg-[#000000] text-[#000000] hover:text-white transition-all group"
                   >
@@ -202,7 +208,7 @@ export default function Navbar() {
               <div className="col-span-7 grid grid-cols-3 gap-4">
                 {/* Card 1: Deep Cleaning */}
                 <Link
-                  href="/#layanan"
+                  href="/harga"
                   onClick={() => setServicesOpen(false)}
                   className="group relative aspect-[3/4] rounded-[24px] sm:rounded-[28px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 block"
                 >
@@ -221,7 +227,7 @@ export default function Navbar() {
 
                 {/* Card 2: Special Treatment */}
                 <Link
-                  href="/#layanan"
+                  href="/harga"
                   onClick={() => setServicesOpen(false)}
                   className="group relative aspect-[3/4] rounded-[24px] sm:rounded-[28px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 block"
                 >
@@ -240,7 +246,7 @@ export default function Navbar() {
 
                 {/* Card 3: Bag & Cap Care */}
                 <Link
-                  href="/#layanan"
+                  href="/harga"
                   onClick={() => setServicesOpen(false)}
                   className="group relative aspect-[3/4] rounded-[24px] sm:rounded-[28px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 block"
                 >
@@ -274,11 +280,18 @@ export default function Navbar() {
               Beranda
             </Link>
             <Link
-              href="/#layanan"
+              href="/harga"
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >
               Layanan & Harga
+            </Link>
+            <Link
+              href="/testimoni"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
+            >
+              Testimoni
             </Link>
             <Link
               href="/#cara-kerja"

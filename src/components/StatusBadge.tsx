@@ -1,5 +1,5 @@
 import React from 'react';
-import { OrderStatus, PaymentStatus, PaymentModel } from '@/lib/types';
+import { OrderStatus, PaymentStatus } from '@/lib/types';
 import {
   Clock,
   Truck,
@@ -8,8 +8,6 @@ import {
   PackageCheck,
   CheckCircle2,
   XCircle,
-  CreditCard,
-  Banknote,
 } from 'lucide-react';
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
@@ -101,30 +99,6 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
     <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
       <Clock className="w-3.5 h-3.5 text-amber-700" />
       BELUM LUNAS
-    </span>
-  );
-}
-
-export function PaymentModelBadge({ model }: { model: PaymentModel }) {
-  if (model === 'MODEL_B') {
-    return (
-      <span
-        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#f2ece5] text-neutral-800 border border-black/10"
-        title="Bayar setelah sepatu tiba dan diverifikasi di workshop"
-      >
-        <CreditCard className="w-3 h-3 text-[#f06a60]" />
-        Model B: Verifikasi Workshop
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#f2ece5] text-neutral-800 border border-black/10"
-      title="Bayar setelah cuci selesai sebelum diantar / COD"
-    >
-      <Banknote className="w-3 h-3 text-[#000000]" />
-      Model C: Selesai / COD
     </span>
   );
 }

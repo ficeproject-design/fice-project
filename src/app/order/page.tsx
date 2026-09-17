@@ -33,7 +33,7 @@ import {
   DEFAULT_WORKSHOP_COORDS,
 } from '@/lib/haversine';
 import { formatRupiah } from '@/lib/invoice';
-import { Service, PaymentModel } from '@/lib/types';
+import { Service } from '@/lib/types';
 
 // Dynamic import for Leaflet map picker
 const MapPicker = dynamic(() => import('@/components/MapPicker'), {
@@ -65,6 +65,8 @@ export default function OrderPage() {
   // Step 1: Items Selection
   const [selectedItems, setSelectedItems] = useState<Record<string, SelectedItem>>({});
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'shoes' | 'bag' | 'accessories'>('all');
+  const [fromCatalog, setFromCatalog] = useState(false);
+  const [editingItems, setEditingItems] = useState(false);
 
   // Step 2: Customer & Location
   const [customerName, setCustomerName] = useState('');
@@ -82,8 +84,7 @@ export default function OrderPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<'morning' | 'afternoon'>('afternoon');
 
-  // Step 4: Payment Model & Order Notes
-  const [paymentModel, setPaymentModel] = useState<PaymentModel>('MODEL_B');
+  // Step 4: Catatan pesanan
   const [orderNotes, setOrderNotes] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,6 +97,33 @@ export default function OrderPage() {
         const data = await res.json();
         if (data.success) {
           setServices(data.data);
+          try {
+            const raw = sessionStorage.getItem('fice_cart');
+            if (raw) {
+              sessionStorage.removeItem('fice_cart');
+              const prefill = JSON.parse(raw) as Record<string, number>;
+              const items: Record<string, SelectedItem> = {};
+              for (const s of data.data as Service[]) {
+                const qty = Number(prefill[s.id]) || 0;
+                if (qty > 0) {
+                  items[s.id] = {
+                    serviceId: s.id,
+                    serviceName: s.name,
+                    category: s.category,
+                    price: s.price,
+                    quantity: Math.min(50, Math.floor(qty)),
+                    itemNotes: '',
+                  };
+                }
+              }
+              if (Object.keys(items).length > 0) {
+                setSelectedItems(items);
+                setFromCatalog(true);
+              }
+            }
+          } catch {
+            // cart prefill rusak, abaikan saja
+          }
         }
       } catch (err) {
         console.error('Error fetching services:', err);
@@ -252,7 +280,6 @@ export default function OrderPage() {
         items: selectedItemsArray,
         pickupDate: selectedDate,
         pickupSlot: selectedSlot,
-        paymentModel,
         promoCode: appliedPromo?.code,
         discountAmount: discountAmount > 0 ? discountAmount : undefined,
         notes: orderNotes.trim(),
@@ -373,8 +400,72 @@ export default function OrderPage() {
             </div>
           </div>
 
+          {/* STEP 1 (KERANJANG DARI HALAMAN HARGA): RINGKASAN SAJA */}
+          {currentStep === 1 && fromCatalog && !editingItems && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
+                <div className="border-b border-black/[0.06] pb-4">
+                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                    Ringkasan Item Pilihan Anda
+                  </h2>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Diteruskan dari halaman Harga. Lanjutkan ke data penjemputan, atau ubah pilihan bila perlu.
+                  </p>
+                </div>
+
+                <ul className="divide-y divide-black/[0.06]">
+                  {selectedItemsArray.map((item) => (
+                    <li key={item.serviceId} className="py-3.5 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-bold text-[#0d1526] text-sm">
+                          {item.quantity}x {item.serviceName}
+                        </p>
+                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                          {formatRupiah(item.price)} / item
+                        </p>
+                      </div>
+                      <span className="font-mono font-bold text-sm text-[#0d1526] shrink-0">
+                        {formatRupiah(item.price * item.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="border-t border-black/[0.08] pt-4 flex items-center justify-between">
+                  <span className="text-sm font-bold text-neutral-600">Subtotal</span>
+                  <span className="font-heading font-black text-2xl text-[#f06a60]">
+                    {formatRupiah(subtotal)}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cart: Record<string, number> = {};
+                      for (const it of selectedItemsArray) cart[it.serviceId] = it.quantity;
+                      sessionStorage.setItem('fice_cart', JSON.stringify(cart));
+                      router.push('/harga');
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-black/15 text-[#0d1526] font-bold text-sm px-6 py-4 rounded-full hover:bg-[#f2ece5] transition-colors"
+                  >
+                    Ubah Pilihan di Halaman Harga
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="flex-1 group relative inline-flex items-center justify-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white font-heading font-bold text-base uppercase tracking-normal px-8 py-4 rounded-full transition-all duration-300 active:scale-95 overflow-hidden"
+                  >
+                    <span className="transition-colors duration-300">Lanjut ke Lokasi &amp; Peta</span>
+                    <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* STEP 1: PILIH LAYANAN */}
-          {currentStep === 1 && (
+          {currentStep === 1 && (!fromCatalog || editingItems) && (
             <div className="space-y-6">
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -527,7 +618,10 @@ export default function OrderPage() {
 
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(2)}
+                  onClick={() => {
+                    setEditingItems(false);
+                    setCurrentStep(2);
+                  }}
                   disabled={!canProceedStep1}
                   className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-full disabled:opacity-40 transition-all shadow-md active:scale-98"
                 >
@@ -846,63 +940,27 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
                   <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                    Pilihan Model Pembayaran
+                    Pembayaran
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Pilih kapan Anda ingin menyelesaikan pembayaran agar transaksi Anda terjamin nyaman.
+                    Satu metode, satu kali bayar, dengan rekening resmi yang bisa dicek.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Model B */}
-                  <div
-                    onClick={() => setPaymentModel('MODEL_B')}
-                    className={`p-6 rounded-3xl border-2 cursor-pointer transition-all ${
-                      paymentModel === 'MODEL_B'
-                        ? 'border-[#f06a60] bg-[#fff8f8] ring-2 ring-[#f06a60]/20'
-                        : 'border-black/[0.08] hover:border-black/20 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-9 h-9 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-heading font-bold text-sm">
-                        B
-                      </div>
-                      <span className="text-[10px] font-bold text-[#f06a60] bg-[#f06a60]/10 px-3 py-1 rounded-full uppercase">
-                        Rekomendasi
-                      </span>
+                <div className="p-6 rounded-3xl border-2 border-[#f06a60] bg-[#fff8f8] ring-2 ring-[#f06a60]/20">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-heading font-bold text-sm shrink-0">
+                      <CreditCard className="w-4.5 h-4.5" />
                     </div>
-                    <h3 className="font-heading font-bold text-[#0d1526] text-base mb-1">
-                      Bayar Setelah Verifikasi di Workshop
+                    <h3 className="font-heading font-bold text-[#0d1526] text-base">
+                      Transfer Bank Setelah Verifikasi di Workshop
                     </h3>
-                    <p className="text-xs text-neutral-600 leading-relaxed">
-                      Sepatu dijemput $\to$ Tiba di workshop $\to$ Tim kami mengecek fisik & foto QC awal $\to$ Tagihan resmi terbit $\to$ Anda bayar via QRIS/Transfer $\to$ Mulai dicuci.
-                    </p>
                   </div>
-
-                  {/* Model C */}
-                  <div
-                    onClick={() => setPaymentModel('MODEL_C')}
-                    className={`p-6 rounded-3xl border-2 cursor-pointer transition-all ${
-                      paymentModel === 'MODEL_C'
-                        ? 'border-[#000000] bg-neutral-50 ring-2 ring-black/20'
-                        : 'border-black/[0.08] hover:border-black/20 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-9 h-9 rounded-full bg-[#000000] text-white flex items-center justify-center font-heading font-bold text-sm">
-                        C
-                      </div>
-                      <span className="text-[10px] font-bold text-neutral-800 bg-[#f2ece5] px-3 py-1 rounded-full uppercase">
-                        Bisa COD
-                      </span>
-                    </div>
-                    <h3 className="font-heading font-bold text-[#0d1526] text-base mb-1">
-                      Bayar Setelah Selesai / COD saat Diantar
-                    </h3>
-                    <p className="text-xs text-neutral-600 leading-relaxed">
-                      Sepatu langsung diproses cuci sampai bersih $\to$ Hasil foto QC After dikirim $\to$ Anda bayar sebelum diantar atau bayar tunai/QRIS langsung ke kurir saat barang tiba.
-                    </p>
-                  </div>
+                  <p className="text-xs text-neutral-600 leading-relaxed">
+                    Sepatu dijemput, tiba di workshop, kondisi fisiknya dicek dan difoto QC awal.
+                    Tagihan resmi terbit di halaman lacak pesanan, Anda bayar via transfer ke rekening
+                    BCA yang tertera di sana, lalu pengerjaan dimulai.
+                  </p>
                 </div>
 
                 <div>

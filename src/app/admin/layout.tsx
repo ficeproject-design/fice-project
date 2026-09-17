@@ -2,18 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   ShoppingBag,
   Users,
   Settings,
   ArrowUpRight,
-  Sparkles,
+  LogOut,
   Truck,
-  TrendingUp,
   Store,
   Tag,
+  Camera,
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -22,6 +22,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  if (pathname === '/admin/login') return <>{children}</>;
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    router.push('/admin/login');
+    router.refresh();
+  };
 
   const navItems = [
     {
@@ -34,6 +43,11 @@ export default function AdminLayout({
       name: 'Antrean & Order',
       href: '/admin/orders',
       icon: ShoppingBag,
+    },
+    {
+      name: 'Galeri Foto QC',
+      href: '/admin/qc',
+      icon: Camera,
     },
     {
       name: 'Customer CRM (WA)',
@@ -111,6 +125,15 @@ export default function AdminLayout({
             </span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all"
+          >
+            <LogOut className="w-4 h-4 text-[#f06a60]" />
+            Keluar
+          </button>
 
           <Link
             href="/order"

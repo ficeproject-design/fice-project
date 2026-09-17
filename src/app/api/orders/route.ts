@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrders, createOrder, getSettings } from '@/lib/db';
+import { getOrders, createOrder, getSettings, getServiceById } from '@/lib/db';
 import { checkOrderEligibility } from '@/lib/haversine';
 import { Order } from '@/lib/types';
 
@@ -43,8 +43,54 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { customer, items, pickupDate, pickupSlot, paymentModel, notes } = body;
-    const totalItemsCount = items.reduce((sum: number, i: { quantity: number }) => sum + i.quantity, 0);
+    const { customer, items, pickupDate, pickupSlot, notes } = body;
+
+    if (
+      typeof customer?.name !== 'string' || !customer.name.trim() ||
+      typeof customer?.phone !== 'string' || !customer.phone.trim() ||
+      typeof customer?.address !== 'string' || !customer.address.trim() ||
+      typeof customer?.latitude !== 'number' ||
+      typeof customer?.longitude !== 'number' ||
+      !pickupDate
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Data pelanggan atau tanggal jemput tidak lengkap' },
+        { status: 400 }
+      );
+    }
+
+    // Prices come from the catalog, never from the client
+    const pricedItems = [];
+    for (let i = 0; i < items.length; i++) {
+      const svc = getServiceById(items[i].serviceId);
+      if (!svc) {
+        return NextResponse.json(
+          { success: false, error: `Layanan tidak ditemukan: ${items[i].serviceId}` },
+          { status: 400 }
+        );
+      }
+      const qty = Number(items[i].quantity);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 50) {
+        return NextResponse.json(
+          { success: false, error: 'Jumlah tiap layanan harus antara 1 - 50' },
+          { status: 400 }
+        );
+      }
+      pricedItems.push({
+        id: `item-${Date.now()}-${i}`,
+        serviceId: svc.id,
+        serviceName: svc.name,
+        category: svc.category,
+        price: svc.price,
+        quantity: qty,
+        itemNotes:
+          typeof items[i].itemNotes === 'string'
+            ? items[i].itemNotes.trim().slice(0, 200)
+            : undefined,
+      });
+    }
+
+    const totalItemsCount = pricedItems.reduce((sum, i) => sum + i.quantity, 0);
 
     // Business rule validation: Distance & Item count check
     const eligibility = checkOrderEligibility(
@@ -65,11 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate subtotal and total
-    const subtotal = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) =>
-        sum + item.price * item.quantity,
-      0
-    );
+    const subtotal = pricedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     // Validate promo code if provided
     let promoCode: string | undefined = undefined;
@@ -88,20 +130,20 @@ export async function POST(req: NextRequest) {
 
     const orderData: Omit<Order, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt' | 'qcPhotos'> = {
       customer,
-      items,
+      items: pricedItems,
       pickupDate,
-      pickupSlot: pickupSlot || 'morning',
+      pickupSlot: pickupSlot === 'afternoon' ? 'afternoon' : 'morning',
       status: 'WAITING_PICKUP',
-      paymentModel: paymentModel || 'MODEL_B',
+      paymentModel: 'MODEL_B', // ponytail: kolom legacy dibiarkan untuk data lama; hapus bareng type saat DB bermigrasi
       paymentStatus: 'UNPAID',
-      paymentMethod: paymentModel === 'MODEL_C' ? 'COD' : undefined,
+      paymentMethod: 'TRANSFER',
       distanceKm: eligibility.distanceKm,
       pickupFee: 0, // Always FREE
       subtotal,
       promoCode,
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
       totalAmount,
-      notes,
+      notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : undefined,
     };
 
     const newOrder = createOrder(orderData);

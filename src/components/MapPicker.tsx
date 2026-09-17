@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation, Search, Check, AlertCircle, Info } from 'lucide-react';
 import { calculateDistanceKm, DEFAULT_WORKSHOP_COORDS } from '@/lib/haversine';
 

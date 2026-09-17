@@ -29,113 +29,9 @@ import {
   Smartphone,
   X,
 } from 'lucide-react';
-import { formatRupiah } from '@/lib/invoice';
 import { COVERAGE_AREAS } from '@/lib/haversine';
-
-const SERVICES_DATA = [
-  // Shoes
-  {
-    category: 'shoes',
-    categoryName: 'Sepatu',
-    name: 'Deep Clean Shoes',
-    desc: 'Pembersihan menyeluruh bagian luar, midsole, insole, outsole, dan tali sepatu.',
-    price: 65000,
-    duration: '2 - 3 Hari',
-    popular: true,
-    tag: 'Paling Populer',
-    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'shoes',
-    categoryName: 'Sepatu',
-    name: 'Special Treatment - Suede',
-    desc: 'Perawatan material khusus Suede & Nubuck dengan sabun khusus agar bulu tetap lembut.',
-    price: 75000,
-    duration: '3 Hari',
-    popular: false,
-    tag: 'Bahan Khusus',
-    image: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'shoes',
-    categoryName: 'Sepatu',
-    name: 'Special Treatment - Leather',
-    desc: 'Pembersihan & conditioning kulit asli/sintetis dengan wax anti-retak dan moisturizer.',
-    price: 90000,
-    duration: '3 Hari',
-    popular: false,
-    tag: 'Perawatan Kulit',
-    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'shoes',
-    categoryName: 'Sepatu',
-    name: 'Little One Care (Kids Shoes)',
-    desc: 'Pembersihan higienis khusus sepatu anak dengan formula ramah anak dan anti-bakteri.',
-    price: 40000,
-    duration: '2 - 3 Hari',
-    popular: false,
-    tag: 'Sepatu Anak',
-    image: 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'shoes',
-    categoryName: 'Sepatu',
-    name: 'Womens Care',
-    desc: 'Deep clean untuk Heels, Wedges, dan Flat shoes dengan sabun pembersih lembut.',
-    price: 45000,
-    duration: '2 - 3 Hari',
-    popular: false,
-    tag: 'Heels & Flats',
-    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80',
-  },
-  // Bags
-  {
-    category: 'bag',
-    categoryName: 'Tas',
-    name: 'Bag Deep Clean (Small)',
-    desc: 'Pembersihan tas ukuran kecil (clutch, waist bag, mini sling bag).',
-    price: 65000,
-    duration: '3 - 4 Hari',
-    popular: false,
-    tag: 'Tas Kecil',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'bag',
-    categoryName: 'Tas',
-    name: 'Bag Deep Clean (Medium)',
-    desc: 'Pembersihan tas ukuran sedang (backpack standar, shoulder bag, tote bag).',
-    price: 85000,
-    duration: '3 - 4 Hari',
-    popular: true,
-    tag: 'Tas Favorit',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80',
-  },
-  {
-    category: 'bag',
-    categoryName: 'Tas',
-    name: 'Bag Deep Clean (Large)',
-    desc: 'Pembersihan tas ukuran besar (travel bag, duffel, backpack gunung, tote bag besar).',
-    price: 110000,
-    duration: '3 - 4 Hari',
-    popular: false,
-    tag: 'Tas Besar',
-    image: 'https://images.unsplash.com/photo-1577733966973-d680bffd2e80?w=800&auto=format&fit=crop&q=80',
-  },
-  // Accessories
-  {
-    category: 'accessories',
-    categoryName: 'Aksesoris',
-    name: 'Hat, Wallet & Pouch Deep Clean',
-    desc: 'Pembersihan menyeluruh untuk topi (snapback/baseball), dompet, atau pouch kosmetik/gadget.',
-    price: 30000,
-    duration: '2 - 3 Hari',
-    popular: false,
-    tag: 'Hemat',
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&auto=format&fit=crop&q=80',
-  },
-];
+import { formatRupiah } from '@/lib/invoice';
+import type { Service } from '@/lib/types';
 
 const SWAP_LOCATIONS = [
   'JAKSEL',
@@ -147,11 +43,26 @@ const SWAP_LOCATIONS = [
 
 export default function HomePage() {
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState<'all' | 'shoes' | 'bag' | 'accessories'>('all');
   const [trackQuery, setTrackQuery] = useState('');
   const [locationIndex, setLocationIndex] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [coverageModalOpen, setCoverageModalOpen] = useState(false);
+  const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/services');
+        const data = await res.json();
+        if (data.success) {
+          const popular = (data.data as Service[]).filter((s) => s.popular);
+          setFeaturedServices(popular.length > 0 ? popular : data.data.slice(0, 4));
+        }
+      } catch {
+        // gagal load, section highlight tetap aman tampil kosong
+      }
+    })();
+  }, []);
 
   // Rotating location text effect matching Sparkles template
   useEffect(() => {
@@ -160,11 +71,6 @@ export default function HomePage() {
     }, 2400);
     return () => clearInterval(timer);
   }, []);
-
-  const filteredServices =
-    activeCategory === 'all'
-      ? SERVICES_DATA
-      : SERVICES_DATA.filter((s) => s.category === activeCategory);
 
   const handleQuickTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,13 +110,6 @@ export default function HomePage() {
               <div className="bg-[#0d1526] text-white rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] p-8 sm:p-12 lg:p-14 xl:p-16 flex flex-col justify-between shadow-xs h-full">
                 {/* Top Rating Badges */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-colors">
-                    <span className="w-5 h-5 rounded-full bg-white text-[#0d1526] flex items-center justify-center font-black text-[11px]">
-                      G
-                    </span>
-                    <span>4.9 ON GOOGLE</span>
-                  </div>
-
                   <div className="inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-colors">
                     <span className="w-5 h-5 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-black text-[10px]">
                       ★
@@ -378,7 +277,7 @@ export default function HomePage() {
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              BAYAR SETELAH SELESAI / COD
+              BAYAR SETELAH TIBA DI WORKSHOP
             </span>
             {/* Loop duplicate */}
             <span className="flex items-center gap-2">
@@ -403,122 +302,79 @@ export default function HomePage() {
         {/* SECTION "WHAT WE CLEAN" / SERVICES */}
         <section id="layanan" className="py-20 sm:py-24 bg-[#fdf8f1] scroll-mt-12">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
-                  <Sparkles className="w-4 h-4 text-[#f06a60]" />
-                  What We Clean • Spesialis Perawatan
-                </div>
-                <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                  Layanan & Harga Transparan
-                </h2>
-                <p className="text-sm sm:text-base text-neutral-600 max-w-2xl leading-relaxed">
-                  Setiap sepatu dan tas dikerjakan manual oleh teknisi berpengalaman dengan formula premium tanpa detergen keras.
-                </p>
+            <div className="space-y-3 mb-10 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
+                <Sparkles className="w-4 h-4 text-[#f06a60]" />
+                What We Clean • Spesialis Perawatan
               </div>
-
-              {/* Category Tabs Pill (Sparkles-inspired: warm container, navy active) */}
-              <div className="flex flex-wrap items-center gap-1.5 bg-[#f5f3f0] p-1.5 rounded-full border border-black/[0.06] shadow-sm">
-                <button
-                  onClick={() => setActiveCategory('all')}
-                  className={`px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
-                    activeCategory === 'all'
-                      ? 'bg-[#0d1526] text-white shadow-sm'
-                      : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
-                  }`}
-                >
-                  Semua
-                </button>
-                <button
-                  onClick={() => setActiveCategory('shoes')}
-                  className={`px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
-                    activeCategory === 'shoes'
-                      ? 'bg-[#0d1526] text-white shadow-sm'
-                      : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
-                  }`}
-                >
-                  Sepatu
-                </button>
-                <button
-                  onClick={() => setActiveCategory('bag')}
-                  className={`px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
-                    activeCategory === 'bag'
-                      ? 'bg-[#0d1526] text-white shadow-sm'
-                      : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
-                  }`}
-                >
-                  Tas
-                </button>
-                <button
-                  onClick={() => setActiveCategory('accessories')}
-                  className={`px-7 sm:px-8 py-3.5 rounded-full text-sm sm:text-base font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
-                    activeCategory === 'accessories'
-                      ? 'bg-[#0d1526] text-white shadow-sm'
-                      : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
-                  }`}
-                >
-                  Topi &amp; Aksesoris
-                </button>
-              </div>
+              <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                Layanan & Harga Transparan
+              </h2>
+              <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
+                Setiap sepatu dan tas dikerjakan manual oleh teknisi berpengalaman dengan formula premium tanpa detergen keras.
+              </p>
             </div>
 
-            {/* Grid Services */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
-              {filteredServices.map((srv, idx) => (
-                <div
-                  key={idx}
-                  className="group bg-white rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 border border-black/[0.08] hover:border-[#f06a60] hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className="relative h-56 sm:h-64 rounded-[22px] overflow-hidden bg-neutral-100">
-                      <img
-                        src={srv.image}
-                        alt={srv.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {srv.popular && (
-                        <span className="absolute top-3.5 left-3.5 bg-[#f06a60] text-white text-xs font-heading font-black uppercase px-3 py-1.5 rounded-full shadow-xs">
-                          {srv.tag}
+            {featuredServices.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                {featuredServices.map((srv) => (
+                  <Link
+                    key={srv.id}
+                    href="/harga"
+                    className="bg-white rounded-[28px] p-5 sm:p-6 border border-black/[0.08] hover:border-[#f06a60]/60 transition-colors flex flex-col justify-between gap-4"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-slate-500">
+                          {srv.category === 'shoes'
+                            ? 'Sepatu'
+                            : srv.category === 'bag'
+                              ? 'Tas'
+                              : 'Topi & Aksesori'}
                         </span>
-                      )}
-                      <span className="absolute bottom-3.5 right-3.5 bg-white/95 backdrop-blur-xs text-[#000000] text-xs font-bold px-3 py-1.5 rounded-full border border-black/10">
-                        {srv.duration}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-xs uppercase font-heading font-bold tracking-wider text-[#0d1526]/50">
-                        {srv.categoryName}
-                      </span>
-                      <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#0d1526] leading-tight">
+                        {srv.popular && (
+                          <span className="bg-[#f06a60] text-white text-[10px] font-heading font-black uppercase px-2.5 py-1 rounded-full">
+                            Populer
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-heading font-bold text-lg sm:text-xl text-[#0d1526] leading-tight">
                         {srv.name}
                       </h3>
-                      <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed min-h-[44px]">
-                        {srv.desc}
+                      <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed line-clamp-2">
+                        {srv.description}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="pt-5 mt-5 border-t border-black/[0.06] flex items-center justify-between">
-                    <div>
-                      <span className="text-xs text-neutral-400 block font-bold uppercase tracking-wider">Tarif</span>
-                      <span className="font-heading font-black text-2xl sm:text-3xl text-[#f06a60]">
-                        {formatRupiah(srv.price)}
+                    <div className="pt-3.5 border-t border-black/[0.06] flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">
+                          Tarif / item
+                        </span>
+                        <span className="font-heading font-black text-xl text-[#f06a60]">
+                          {formatRupiah(srv.price)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {srv.estimatedDays}
                       </span>
                     </div>
+                  </Link>
+                ))}
+              </div>
+            )}
 
-                    <Link
-                      href="/order"
-                      className="group/btn relative inline-flex items-center justify-center bg-[#000000] hover:bg-[#f06a60] text-white hover:text-[#000000] font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-7 sm:px-8 py-3.5 rounded-full shadow-xs hover:shadow-md transition-all duration-300 ease-out active:scale-95 overflow-hidden"
-                    >
-                      <span className="transition-colors duration-300">Pesan</span>
-                      <span className="max-w-0 opacity-0 -translate-x-2 group-hover/btn:max-w-6 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 group-hover/btn:ml-2 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
-                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                      </span>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+            <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+              <p className="text-xs text-neutral-500">
+                Filter kategori, jumlah item, dan checkout lengkap tersedia di halaman harga.
+              </p>
+              <Link
+                href="/harga"
+                className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-[#000000] hover:text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-7 py-3.5 rounded-full shadow-sm transition-all duration-300 active:scale-95"
+              >
+                Lihat Semua Layanan &amp; Harga
+                <ArrowRight className="w-4 h-4 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </section>
@@ -580,9 +436,9 @@ export default function HomePage() {
                   04
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">Antar &amp; Bayar</h3>
+                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">Antar Kembali</h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    Sepatu selesai dicuci, foto QC After diunggah, diantar kembali, dan Anda bayar dengan nyaman (Transfer/QRIS/COD).
+                    Sepatu selesai dicuci, foto QC After diunggah, lalu diantar kembali ke alamat Anda.
                   </p>
                 </div>
               </div>
@@ -788,7 +644,7 @@ export default function HomePage() {
                 },
                 {
                   q: 'Kapan saya harus membayar pesanan saya?',
-                  a: 'Anda bisa memilih Model B (bayar via QRIS/Transfer setelah sepatu tiba di workshop dan diverifikasi kondisinya oleh admin) atau Model C (bayar setelah proses cuci selesai sebelum diantar kembali, atau bayar tunai/COD langsung ke kurir saat barang tiba).',
+                  a: 'Pembayaran dilakukan satu kali via transfer bank, setelah sepatu tiba di workshop dan kondisi fisiknya diverifikasi lewat foto QC awal. Tagihan resmi terbit di halaman lacak pesanan Anda beserta rekening tujuan.',
                 },
               ].map((item, i) => (
                 <div

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Heart, Users, Star, ArrowRight, BadgeCheck, Sparkles, Quote } from 'lucide-react';
+import { Heart, Users, ArrowRight, BadgeCheck, Sparkles, Quote } from 'lucide-react';
 
 export default function TentangPage() {
   return (
@@ -39,24 +39,13 @@ export default function TentangPage() {
                 </Link>
               </div>
 
-              <div className="relative">
-                <div className="rounded-[32px] overflow-hidden h-[420px] sm:h-[500px] bg-[#f2ece5]">
-                  <img
-                    src="https://images.unsplash.com/photo-1556906781-9a412961d28f?w=900&auto=format&fit=crop&q=85"
-                    alt="Fice Shoes Care Workshop"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-[32px]" />
-                </div>
-                <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md rounded-2xl px-5 py-4 border border-black/[0.08] shadow-lg flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#f06a60] flex items-center justify-center shrink-0">
-                    <Star className="w-6 h-6 text-white fill-white" />
-                  </div>
-                  <div>
-                    <p className="font-heading font-bold text-[#0d1526] text-base leading-tight">4.9 Rating Google</p>
-                    <p className="text-xs text-neutral-500 font-body mt-0.5">Dipercaya ratusan pelanggan di Jaksel, Tangsel & Tangerang</p>
-                  </div>
-                </div>
+              <div className="relative rounded-[32px] overflow-hidden h-[420px] sm:h-[500px] bg-[#f2ece5]">
+                <img
+                  src="https://images.unsplash.com/photo-1556906781-9a412961d28f?w=900&auto=format&fit=crop&q=85"
+                  alt="Fice Shoes Care Workshop"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-[32px]" />
               </div>
             </div>
           </div>

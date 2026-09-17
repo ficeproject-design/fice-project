@@ -481,6 +481,19 @@ export function addQCPhoto(
   return null;
 }
 
+export function deleteQCPhoto(orderId: string, photoId: string): Order | null {
+  const db = readDb();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return null;
+  const before = order.qcPhotos.length;
+  order.qcPhotos = order.qcPhotos.filter((p) => p.id !== photoId);
+  if (order.qcPhotos.length !== before) {
+    order.updatedAt = new Date().toISOString();
+    writeDb(db);
+  }
+  return order;
+}
+
 // Customer CRM Methods
 export function getCustomers(): Customer[] {
   return readDb().customers.sort(
@@ -488,6 +501,49 @@ export function getCustomers(): Customer[] {
       new Date(b.lastOrderAt || b.createdAt).getTime() -
       new Date(a.lastOrderAt || a.createdAt).getTime()
   );
+}
+
+export interface TestimonialShowcase {
+  id: string;
+  firstName: string;
+  area: string;
+  services: string[];
+  beforePhoto?: string;
+  afterPhoto?: string;
+  review?: string;
+  completedAt: string;
+}
+
+// Only real completed orders with both QC photos, anonymized (first name + district)
+export function getTestimonialShowcase(): TestimonialShowcase[] {
+  return readDb()
+    .orders.filter((o) => o.status === 'COMPLETED')
+    .map((o) => {
+      const before = [...o.qcPhotos].reverse().find((p) => p.type === 'BEFORE');
+      const after = [...o.qcPhotos].reverse().find((p) => p.type === 'AFTER');
+      return {
+        id: o.id,
+        firstName: o.customer.name.trim().split(/\s+/)[0],
+        area: o.customer.district || o.customer.city,
+        services: o.items.map((i) => `${i.quantity}x ${i.serviceName}`),
+        beforePhoto: before?.photoUrl,
+        afterPhoto: after?.photoUrl,
+        review: o.customerReview,
+        completedAt: o.updatedAt,
+      };
+    })
+    .filter((t) => t.beforePhoto && t.afterPhoto)
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+}
+
+export function updateCustomerReview(id: string, review: string): Order | null {
+  const db = readDb();
+  const order = db.orders.find((o) => o.id === id);
+  if (!order) return null;
+  const clean = review.trim().slice(0, 300);
+  order.customerReview = clean.length > 0 ? clean : undefined;
+  writeDb(db);
+  return order;
 }
 
 // Settings Methods

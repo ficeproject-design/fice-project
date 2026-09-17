@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fice Shoes Care
 
-## Getting Started
+Web order jasa cuci dan perawatan sepatu, tas, dan aksesori dengan free antar-jemput. Berisi landing page, wizard order pelanggan, pelacakan pesanan, dan panel admin (order, CRM pelanggan, promo, pengaturan workshop).
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router) + React 19 + TypeScript
+- Tailwind CSS 4
+- Leaflet (peta pemilihan titik jemput)
+- Database: file JSON di `data/db.json`, diakses lewat `src/lib/db.ts`. Bukan untuk multi-instance.
+
+## Menjalankan
 
 ```bash
+npm install
+cp .env.example .env.local   # isi ADMIN_PASSWORD dan AUTH_SECRET
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Website: http://localhost:3000
+- Panel admin: http://localhost:3000/admin (login pakai `ADMIN_PASSWORD`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Struktur
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    page.tsx            Landing
+    order/              Wizard pemesanan
+    track/              Cek status via nomor invoice
+    tentang/            Profil
+    admin/              Panel admin (dashboard, orders, customers, promos, settings)
+    api/                Route handlers
+  components/           Navbar, Footer, MapPicker, StatusBadge
+  lib/                  db.ts (JSON store), haversine.ts (radius jemput), invoice.ts, types.ts, auth.ts
+  proxy.ts              Gerbang auth admin (runs sebelum request)
+data/db.json            Semua data: services, customers, orders, promos, settings
+```
 
-## Learn More
+## Catatan deploy
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`data/db.json` ditulis lewat filesystem, jadi butuh instance tunggal dengan disk persisten (bukan serverless). Untuk scale: migrasi ke SQLite/Postgres, interface `src/lib/db.ts` tinggal diganti.

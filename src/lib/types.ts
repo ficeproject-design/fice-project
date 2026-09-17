@@ -81,6 +81,7 @@ export interface Order {
   totalAmount: number;
   qcPhotos: QualityCheckPhoto[];
   notes?: string;
+  customerReview?: string; // Kalimat testimoni pelanggan (opsional, diedit admin)
   createdAt: string;
   updatedAt: string;
   paidAt?: string;

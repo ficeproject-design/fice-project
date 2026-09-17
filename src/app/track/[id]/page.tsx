@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
-  PaymentModelBadge,
 } from '@/components/StatusBadge';
 import {
   Truck,
@@ -506,10 +505,10 @@ export default function OrderDetailPage({
                   <div className="flex items-start gap-3 pt-2 border-t border-black/[0.06]">
                     <CreditCard className="w-4 h-4 text-[#f06a60] shrink-0 mt-0.5" />
                     <div>
-                      <strong className="block text-slate-900">Model Pembayaran:</strong>
-                      <div className="mt-1">
-                        <PaymentModelBadge model={order.paymentModel} />
-                      </div>
+                      <strong className="block text-slate-900">Metode Pembayaran:</strong>
+                      <p className="text-xs text-neutral-600 mt-0.5">
+                        Transfer Bank BCA. Tagihan terbit setelah sepatu diverifikasi di workshop.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -526,7 +525,7 @@ export default function OrderDetailPage({
                     </span>
                   </div>
                   <p className="text-xs text-neutral-300 leading-relaxed">
-                    Transfer ke rekening resmi Fice Shoes Care atau bayar COD saat kurir mengantar:
+                    Transfer ke rekening resmi Fice Shoes Care di bawah ini. Konfirmasi pembayaran bisa dikirim via WhatsApp untuk verifikasi admin:
                   </p>
                   <div className="p-3.5 bg-neutral-900 rounded-2xl border border-neutral-800 text-xs font-mono space-y-1">
                     <div className="text-neutral-400">Bank Central Asia (BCA)</div>
