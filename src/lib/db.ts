@@ -12,6 +12,7 @@ import {
 } from './types';
 import { DEFAULT_WORKSHOP_COORDS } from './haversine';
 import { generateInvoiceNumber, formatRupiah } from './invoice';
+import { cleanPhoneDigits } from './phone';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'db.json');
 
@@ -49,6 +50,7 @@ const DEFAULT_SERVICES: Service[] = [
     description: 'Pembersihan dan conditioning kulit asli/sintetis untuk menjaga kelembapan serta mencegah kerutan dan pecah.',
     estimatedDays: '3 Hari',
     price: 90000,
+    popular: true,
   },
   {
     id: 'srv-shoes-kids',
@@ -100,6 +102,7 @@ const DEFAULT_SERVICES: Service[] = [
     description: 'Pembersihan menyeluruh untuk topi (snapback/baseball), dompet, atau pouch kosmetik/gadget.',
     estimatedDays: '2 - 3 Hari',
     price: 30000,
+    popular: true,
   },
 ];
 
@@ -109,11 +112,11 @@ const DEFAULT_SETTINGS: SystemSettings = {
   workshopCity: 'Tangerang Selatan',
   workshopLat: DEFAULT_WORKSHOP_COORDS.lat,
   workshopLng: DEFAULT_WORKSHOP_COORDS.lng,
-  adminPhone: '081298765432',
+  adminPhone: '08161885553',
   freeRadiusKm: 20,
   minItemsBeyondRadius: 3,
   cutoffHour: 13,
-  bankAccountInfo: 'BCA 8830-1234-5678 a.n. Fice Shoes Care',
+  bankAccountInfo: 'BCA 6030611185 a.n. Fice Shoes Care',
 };
 
 // Seed initial demo data for realistic previews
@@ -121,7 +124,7 @@ const INITIAL_CUSTOMERS: Customer[] = [
   {
     id: 'cust-1',
     name: 'Dimas Prasetyo',
-    phone: '081298765432',
+    phone: '081211110001',
     address: 'Jl. Kemang Timur No. 42, RT 03/RW 04',
     district: 'Mampang Prapatan',
     city: 'Jakarta Selatan',
@@ -145,6 +148,62 @@ const INITIAL_CUSTOMERS: Customer[] = [
     totalOrders: 1,
     lastOrderAt: '2026-09-13T11:30:00.000Z',
     createdAt: '2026-09-13T11:30:00.000Z',
+  },
+  {
+    id: 'cust-3',
+    name: 'Rizky Aditya',
+    phone: '085712345678',
+    address: 'Jl. Bintaro Utama Sektor 3A No. 8',
+    district: 'Pondok Aren',
+    city: 'Tangerang Selatan',
+    latitude: -6.2850,
+    longitude: 106.6930,
+    notes: 'Rumah cat abu-abu pagar besi',
+    totalOrders: 1,
+    lastOrderAt: '2026-09-10T09:00:00.000Z',
+    createdAt: '2026-09-08T14:00:00.000Z',
+  },
+  {
+    id: 'cust-4',
+    name: 'Maya Putri',
+    phone: '081298765432',
+    address: 'Jl. Kemang Selatan XII No. 22',
+    district: 'Mampang Prapatan',
+    city: 'Jakarta Selatan',
+    latitude: -6.2480,
+    longitude: 106.8130,
+    notes: 'Sebelah minimarket Indomaret',
+    totalOrders: 1,
+    lastOrderAt: '2026-09-11T14:00:00.000Z',
+    createdAt: '2026-09-09T16:00:00.000Z',
+  },
+  {
+    id: 'cust-5',
+    name: 'Fajar Nugroho',
+    phone: '082145678901',
+    address: 'Cluster Duta Mas Blok E12 No. 3, Gading Serpong',
+    district: 'Curug',
+    city: 'Tangerang',
+    latitude: -6.2310,
+    longitude: 106.6120,
+    notes: 'Pagar hijau depan gang',
+    totalOrders: 1,
+    lastOrderAt: '2026-09-15T10:00:00.000Z',
+    createdAt: '2026-09-14T08:00:00.000Z',
+  },
+  {
+    id: 'cust-6',
+    name: 'Siti Nurhaliza',
+    phone: '085612349876',
+    address: 'Jl. Ciputat Raya No. 99, Pamulang',
+    district: 'Pamulang',
+    city: 'Tangerang Selatan',
+    latitude: -6.3450,
+    longitude: 106.7450,
+    notes: 'Rumah warna krem dekat SDN 01',
+    totalOrders: 1,
+    lastOrderAt: '2026-09-16T11:00:00.000Z',
+    createdAt: '2026-09-15T07:00:00.000Z',
   },
 ];
 
@@ -242,6 +301,212 @@ const INITIAL_ORDERS: Order[] = [
     notes: 'Taruh di titip satpam jika saya belum pulang kerja.',
     createdAt: '2026-09-13T11:30:00.000Z',
     updatedAt: '2026-09-13T11:30:00.000Z',
+  },
+  {
+    id: 'ord-103',
+    invoiceNumber: 'INV-202609-0003',
+    customer: INITIAL_CUSTOMERS[2],
+    items: [
+      {
+        id: 'item-5',
+        serviceId: 'srv-shoes-leather',
+        serviceName: 'Special Treatment - Leather / Kulit',
+        category: 'shoes',
+        price: 90000,
+        quantity: 1,
+        itemNotes: 'Dr. Martens 1460 Black Leather',
+      },
+      {
+        id: 'item-6',
+        serviceId: 'srv-bag-small',
+        serviceName: 'Bag Deep Clean (Small)',
+        category: 'bag',
+        price: 65000,
+        quantity: 1,
+        itemNotes: 'Tas Selempang Zara Hitam',
+      },
+    ],
+    pickupDate: '2026-09-10',
+    pickupSlot: 'afternoon',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'TRANSFER',
+    distanceKm: 3.2,
+    pickupFee: 0,
+    subtotal: 155000,
+    totalAmount: 155000,
+    qcPhotos: [
+      {
+        id: 'qc-3',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&auto=format&fit=crop&q=80',
+        notes: 'Kulit Dr. Martens kering dan ada goresan ringan di toe box.',
+        createdAt: '2026-09-10T15:20:00.000Z',
+      },
+      {
+        id: 'qc-4',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=600&auto=format&fit=crop&q=80',
+        notes: 'Kulit sudah conditioning, kilap alami pulih dan goresan pudar.',
+        createdAt: '2026-09-11T10:00:00.000Z',
+      },
+    ],
+    notes: 'Tolong careful ya, ini sepatu favorit.',
+    createdAt: '2026-09-08T14:00:00.000Z',
+    updatedAt: '2026-09-11T11:00:00.000Z',
+    paidAt: '2026-09-10T16:00:00.000Z',
+    customerReview: 'Dr. Martens saya seperti baru lagi! Prosesnya cepat dan documentation QC-nya sangat detail. Recommended banget.',
+  },
+  {
+    id: 'ord-104',
+    invoiceNumber: 'INV-202609-0004',
+    customer: INITIAL_CUSTOMERS[3],
+    items: [
+      {
+        id: 'item-7',
+        serviceId: 'srv-shoes-deepclean',
+        serviceName: 'Deep Clean Shoes',
+        category: 'shoes',
+        price: 65000,
+        quantity: 2,
+        itemNotes: 'Nike Air Force 1 White & Converse Chuck 70',
+      },
+    ],
+    pickupDate: '2026-09-11',
+    pickupSlot: 'morning',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'QRIS',
+    distanceKm: 8.5,
+    pickupFee: 0,
+    subtotal: 130000,
+    totalAmount: 130000,
+    qcPhotos: [
+      {
+        id: 'qc-5',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80',
+        notes: 'Sepatu putih sudah menguning dan sol kotor parah.',
+        createdAt: '2026-09-11T10:15:00.000Z',
+      },
+      {
+        id: 'qc-6',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=600&auto=format&fit=crop&q=80',
+        notes: 'Putih kembali cerah, sol bersih dan wangi segar.',
+        createdAt: '2026-09-12T09:00:00.000Z',
+      },
+    ],
+    notes: '',
+    createdAt: '2026-09-09T16:00:00.000Z',
+    updatedAt: '2026-09-12T10:00:00.000Z',
+    paidAt: '2026-09-11T11:00:00.000Z',
+    customerReview: 'Gila sih, Air Force 1 yang udah kuning jadi putih kinclong lagi! Next time mau coba treatment sepatu suede juga.',
+  },
+  {
+    id: 'ord-105',
+    invoiceNumber: 'INV-202609-0005',
+    customer: INITIAL_CUSTOMERS[4],
+    items: [
+      {
+        id: 'item-8',
+        serviceId: 'srv-shoes-suede',
+        serviceName: 'Special Treatment - Suede',
+        category: 'shoes',
+        price: 75000,
+        quantity: 1,
+        itemNotes: 'New Balance 574 Suede Grey',
+      },
+      {
+        id: 'item-9',
+        serviceId: 'srv-bag-large',
+        serviceName: 'Bag Deep Clean (Large)',
+        category: 'bag',
+        price: 110000,
+        quantity: 1,
+        itemNotes: 'Tas Travel Eiger 40L',
+      },
+    ],
+    pickupDate: '2026-09-15',
+    pickupSlot: 'afternoon',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'TRANSFER',
+    distanceKm: 15.3,
+    pickupFee: 0,
+    subtotal: 185000,
+    totalAmount: 185000,
+    qcPhotos: [
+      {
+        id: 'qc-7',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&auto=format&fit=crop&q=80',
+        notes: 'Suede sudah pudar dan ada noda air di bagian heel. Tas travel kotor debu.',
+        createdAt: '2026-09-15T15:00:00.000Z',
+      },
+      {
+        id: 'qc-8',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&auto=format&fit=crop&q=80',
+        notes: 'Suede pulih warnanya, noda hilang. Tas travel bersih seperti baru.',
+        createdAt: '2026-09-16T14:00:00.000Z',
+      },
+    ],
+    notes: 'Sepatu ini mau dipakai weekend, mohon diprioritaskan.',
+    createdAt: '2026-09-14T08:00:00.000Z',
+    updatedAt: '2026-09-16T15:00:00.000Z',
+    paidAt: '2026-09-15T16:00:00.000Z',
+    customerReview: 'Warna suede NB 574 saya balik normal, noda air yang membandel hilang total. Tas Eiger juga kinclong. Mantap!',
+  },
+  {
+    id: 'ord-106',
+    invoiceNumber: 'INV-202609-0006',
+    customer: INITIAL_CUSTOMERS[5],
+    items: [
+      {
+        id: 'item-10',
+        serviceId: 'srv-shoes-kids',
+        serviceName: 'Little One Care (Kids Shoes)',
+        category: 'shoes',
+        price: 40000,
+        quantity: 3,
+        itemNotes: 'Skechers Kids, Sepatu Sekolah Nike, Crocs Anak',
+      },
+    ],
+    pickupDate: '2026-09-16',
+    pickupSlot: 'morning',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'QRIS',
+    distanceKm: 6.7,
+    pickupFee: 0,
+    subtotal: 120000,
+    totalAmount: 120000,
+    qcPhotos: [
+      {
+        id: 'qc-9',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&auto=format&fit=crop&q=80',
+        notes: '3 sepatu anak kotor parah, ada bekas cat dan noda makanan.',
+        createdAt: '2026-09-16T09:30:00.000Z',
+      },
+      {
+        id: 'qc-10',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&auto=format&fit=crop&q=80',
+        notes: 'Semua sepatu bersih, noda cat hilang, wangi dan higienis.',
+        createdAt: '2026-09-17T10:00:00.000Z',
+      },
+    ],
+    notes: 'Anak saya aktif banget, sepatunya kotor setiap hari hehe.',
+    createdAt: '2026-09-15T07:00:00.000Z',
+    updatedAt: '2026-09-17T11:00:00.000Z',
+    paidAt: '2026-09-16T10:00:00.000Z',
+    customerReview: '3 sepatu anak saya yang super kotor jadi bersih semua! Anti bakterinya juga penting banget buat sepatu anak. Pasti langganan.',
   },
 ];
 
@@ -373,13 +638,24 @@ export function createOrder(
   newOrder: Omit<Order, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt' | 'qcPhotos'>
 ): Order {
   const db = readDb();
-  const id = 'ord-' + Date.now();
-  const invoiceNumber = generateInvoiceNumber(db.orders.length);
+  const id =
+    'ord-' +
+    Date.now() +
+    '-' +
+    Math.random().toString(36).slice(2, 6);
+  let invoiceNumber = generateInvoiceNumber(db.orders.length);
+  // Guard against the (extremely unlikely) random collision
+  let guard = 0;
+  while (db.orders.some((o) => o.invoiceNumber === invoiceNumber) && guard < 5) {
+    invoiceNumber = generateInvoiceNumber(db.orders.length);
+    guard += 1;
+  }
   const now = new Date().toISOString();
 
-  // Save or update customer
+  // Save or update customer (match by cleaned digits so 0812… / 62812… / 0812-… unify)
+  const incomingDigits = cleanPhoneDigits(newOrder.customer.phone);
   const existingCustIdx = db.customers.findIndex(
-    (c) => c.phone === newOrder.customer.phone
+    (c) => cleanPhoneDigits(c.phone) === incomingDigits
   );
   let savedCustomer: Customer;
   if (existingCustIdx !== -1) {

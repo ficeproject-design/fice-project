@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
 /* Custom Webfonts matching Sparkles Reference */
+
+/* Bugaki Display Font — for giant brand text in footer */
+@font-face {
+  font-family: 'Bugaki';
+  src: url('/fonts/Bugaki-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: 'Decalotype Fix';
   src: url('/fonts/Decalotype-Regular-fix.otf') format('opentype');
@@ -134,6 +144,24 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   animation-play-state: paused;
 }
 
+/* Service cards auto-scroll carousel */
+@keyframes carousel-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-carousel {
+  animation: carousel-scroll 20s linear infinite;
+}
+
+.animate-carousel:hover {
+  animation-play-state: paused;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -148,4 +176,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #b5a494;
+}
+
+/* Hide scrollbar for horizontal carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

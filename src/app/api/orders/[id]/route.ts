@@ -10,6 +10,18 @@ import {
 } from '@/lib/db';
 import type { OrderStatus } from '@/lib/types';
 
+/** Allowed forward/backward steps. Terminal states have no outgoing edges. */
+const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  WAITING_PICKUP: ['PICKING_UP', 'CANCELLED'],
+  PICKING_UP: ['IN_WORKSHOP', 'WAITING_PICKUP', 'CANCELLED'],
+  IN_WORKSHOP: ['IN_PROGRESS', 'CANCELLED'],
+  IN_PROGRESS: ['READY_TO_DELIVER', 'CANCELLED'],
+  READY_TO_DELIVER: ['DELIVERING', 'CANCELLED'],
+  DELIVERING: ['COMPLETED', 'READY_TO_DELIVER'],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -49,20 +61,80 @@ export async function PATCH(
 
     let updatedOrder = null;
 
-    // Action: Update Order Status
+    // Action: Update Order Status (guarded transitions)
     if (action === 'update_status') {
       const valid: OrderStatus[] = [
         'WAITING_PICKUP', 'PICKING_UP', 'IN_WORKSHOP', 'IN_PROGRESS',
         'READY_TO_DELIVER', 'DELIVERING', 'COMPLETED', 'CANCELLED',
       ];
       if (valid.includes(status)) {
+        const current = getOrderById(id);
+        if (!current) {
+          return NextResponse.json(
+            { success: false, error: 'Pesanan tidak ditemukan' },
+            { status: 404 }
+          );
+        }
+        const allowed = ALLOWED_TRANSITIONS[current.status] || [];
+        if (!allowed.includes(status)) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Transisi status ${current.status} → ${status} tidak diizinkan.`,
+            },
+            { status: 400 }
+          );
+        }
+        if (status === 'CANCELLED' && current.paymentStatus === 'PAID') {
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                'Pesanan yang sudah dibayar (PAID) tidak bisa dibatalkan. Refund manual dulu bila perlu.',
+            },
+            { status: 400 }
+          );
+        }
+        if (status === 'COMPLETED' && current.paymentStatus !== 'PAID') {
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                'Pesanan belum dibayar (UNPAID) tidak bisa ditandai COMPLETED. Verifikasi pembayaran dulu.',
+            },
+            { status: 400 }
+          );
+        }
         updatedOrder = updateOrderStatus(id, status);
       }
     }
-    // Action: Update Payment Status
+    // Action: Update Payment Status (no downgrade, whitelisted method)
     else if (action === 'update_payment') {
       if (paymentStatus === 'PAID' || paymentStatus === 'UNPAID') {
-        updatedOrder = updatePaymentStatus(id, paymentStatus, paymentMethod);
+        const current = getOrderById(id);
+        if (!current) {
+          return NextResponse.json(
+            { success: false, error: 'Pesanan tidak ditemukan' },
+            { status: 404 }
+          );
+        }
+        if (current.paymentStatus === 'PAID' && paymentStatus === 'UNPAID') {
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                'Status PAID tidak bisa diturunkan ke UNPAID (jejak audit). Buat penyesuaian manual bila perlu.',
+            },
+            { status: 400 }
+          );
+        }
+        const allowedMethods = ['QRIS', 'TRANSFER', 'COD'] as const;
+        const safeMethod: (typeof allowedMethods)[number] | undefined =
+          typeof paymentMethod === 'string' &&
+          (allowedMethods as readonly string[]).includes(paymentMethod)
+            ? (paymentMethod as (typeof allowedMethods)[number])
+            : undefined;
+        updatedOrder = updatePaymentStatus(id, paymentStatus, safeMethod);
       }
     }
     // Action: Add QC Photo

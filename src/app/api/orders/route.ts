@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrders, createOrder, getSettings, getServiceById } from '@/lib/db';
 import { checkOrderEligibility } from '@/lib/haversine';
+import { isValidPhone, PHONE_HINT, cleanPhoneDigits } from '@/lib/phone';
 import { Order } from '@/lib/types';
+
+// In-memory sliding-window limiter (per process): 10 POSTs / 5 min / IP.
+const ORDER_POST_WINDOW_MS = 5 * 60 * 1000;
+const ORDER_POST_MAX = 10;
+const orderPostHits = new Map<string, number[]>();
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const hits = (orderPostHits.get(key) || []).filter((t) => now - t < ORDER_POST_WINDOW_MS);
+  if (hits.length >= ORDER_POST_MAX) {
+    orderPostHits.set(key, hits);
+    return true;
+  }
+  hits.push(now);
+  orderPostHits.set(key, hits);
+  return false;
+}
+
+/** Normalize 62… / 0… to a comparable 0… form. */
+function normPhone(digits: string): string {
+  if (digits.startsWith('62')) return '0' + digits.slice(2);
+  return digits;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,8 +36,19 @@ export async function GET(req: NextRequest) {
     let orders = getOrders();
 
     if (phone) {
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
-      orders = orders.filter((o) => o.customer.phone.replace(/[^0-9]/g, '').includes(cleanPhone));
+      const cleanPhone = normPhone(cleanPhoneDigits(phone));
+      // Anti-harvest: require at least 4 digits; match exact or trailing
+      // digits only (e.g. full number or last-4), never substring/prefix scans.
+      if (cleanPhone.length < 4) {
+        return NextResponse.json(
+          { success: false, error: 'Pencarian nomor minimal 4 digit terakhir.' },
+          { status: 400 }
+        );
+      }
+      orders = orders.filter((o) => {
+        const stored = normPhone(cleanPhoneDigits(o.customer.phone));
+        return stored === cleanPhone || stored.endsWith(cleanPhone);
+      });
     }
 
     if (status) {
@@ -32,6 +67,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
+    if (isRateLimited(`order:${ip}`)) {
+      return NextResponse.json(
+        { success: false, error: 'Terlalu banyak pesanan. Coba lagi beberapa menit.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const settings = getSettings();
 
@@ -55,6 +101,13 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { success: false, error: 'Data pelanggan atau tanggal jemput tidak lengkap' },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidPhone(customer.phone)) {
+      return NextResponse.json(
+        { success: false, error: PHONE_HINT },
         { status: 400 }
       );
     }
@@ -103,6 +156,20 @@ export async function POST(req: NextRequest) {
       settings.minItemsBeyondRadius
     );
 
+    if (
+      customer.latitude === settings.workshopLat &&
+      customer.longitude === settings.workshopLng
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Titik peta masih di workshop. Geser pin merah ke lokasi rumah Anda sebelum memesan.',
+        },
+        { status: 400 }
+      );
+    }
+
     if (!eligibility.allowed) {
       return NextResponse.json(
         { success: false, error: eligibility.message, eligibility },
@@ -129,7 +196,15 @@ export async function POST(req: NextRequest) {
     const totalAmount = Math.max(0, subtotal - discountAmount);
 
     const orderData: Omit<Order, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt' | 'qcPhotos'> = {
-      customer,
+      customer: {
+        ...customer,
+        name: customer.name.trim(),
+        phone: customer.phone.trim(),
+        address: customer.address.trim(),
+        district: typeof customer.district === 'string' ? customer.district.trim() : customer.district,
+        city: typeof customer.city === 'string' ? customer.city.trim() : customer.city,
+        notes: typeof customer.notes === 'string' ? customer.notes.trim() : customer.notes,
+      },
       items: pricedItems,
       pickupDate,
       pickupSlot: pickupSlot === 'afternoon' ? 'afternoon' : 'morning',

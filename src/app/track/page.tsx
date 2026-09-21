@@ -16,7 +16,7 @@ export default function TrackSearchPage() {
     e.preventDefault();
     const clean = query.trim();
     if (!clean) {
-      setError('Masukkan nomor invoice atau nomor WhatsApp');
+      setError('Enter invoice number or WhatsApp number');
       return;
     }
 
@@ -43,7 +43,7 @@ export default function TrackSearchPage() {
                 Live Status Tracker
               </span>
               <h1 className="font-heading font-bold text-2xl sm:text-3xl text-[#0d1526] tracking-tight">
-                Lacak Status Sepatu Anda
+                Track Your Shoe Status
               </h1>
               <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
                 Pantau penjemputan, dokumentasi foto fisik QC di workshop, hingga pengantaran kembali ke rumah Anda.
@@ -53,7 +53,7 @@ export default function TrackSearchPage() {
             <form onSubmit={handleSearch} className="space-y-4 text-left">
               <div>
                 <label className="text-xs font-bold text-neutral-700 block mb-1.5">
-                  Nomor Invoice atau Nomor WhatsApp:
+                  Invoice or WhatsApp Number:
                 </label>
                 <div className="relative">
                   <input
@@ -63,7 +63,7 @@ export default function TrackSearchPage() {
                       setQuery(e.target.value);
                       if (error) setError(null);
                     }}
-                    placeholder="Contoh: INV-202609-0001 atau 081298765432"
+                    placeholder="e.g. INV-202609-0001 or 081211110001"
                     className="w-full text-sm pl-11 pr-4 py-3.5 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                   />
                   <Search className="w-4 h-4 text-neutral-400 absolute left-4 top-4" />
@@ -78,16 +78,16 @@ export default function TrackSearchPage() {
 
               <button
                 type="submit"
-                className="w-full bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-lg tracking-normal uppercase py-4 px-6 rounded-full shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98 overflow-hidden"
+                className="w-full bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-lg tracking-normal uppercase py-4 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98 overflow-hidden"
               >
                 <PackageCheck className="w-5 h-5" />
-                <span>Cek Status Sekarang</span>
+                <span>Track Now</span>
               </button>
             </form>
 
             <div className="pt-4 border-t border-black/[0.06] text-xs text-neutral-500">
               <p>
-                Belum memesan cuci sepatu & tas?{' '}
+                Belum pesan cuci sepatu & tas?{' '}
                 <Link href="/order" className="text-[#f06a60] font-bold hover:underline">
                   Pesan Antar-Jemput Gratis Disini
                 </Link>

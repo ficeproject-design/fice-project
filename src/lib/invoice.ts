@@ -9,12 +9,20 @@ export function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export function generateInvoiceNumber(existingCount: number = 0): string {
+export function generateInvoiceNumber(_existingCount: number = 0): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  const sequence = String(existingCount + 1).padStart(4, '0');
-  return `INV-${year}${month}-${sequence}`;
+  // Uniqueness: base36 timestamp slice + 3 random alphanumerics.
+  // Ignores order count so deletes / concurrent creates can't collide.
+  const timePart = Date.now().toString(36).toUpperCase().slice(-3);
+  const randPart = Math.random()
+    .toString(36)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 3)
+    .padEnd(3, 'X');
+  return `INV-${year}${month}-${timePart}${randPart}`;
 }
 
 /**

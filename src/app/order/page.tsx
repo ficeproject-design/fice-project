@@ -33,6 +33,8 @@ import {
   DEFAULT_WORKSHOP_COORDS,
 } from '@/lib/haversine';
 import { formatRupiah } from '@/lib/invoice';
+import { isValidPhone, PHONE_HINT } from '@/lib/phone';
+import { readCart, writeCart, clearCart } from '@/lib/cart';
 import { Service } from '@/lib/types';
 
 // Dynamic import for Leaflet map picker
@@ -40,7 +42,7 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-80 rounded-3xl bg-[#f2ece5] border border-black/10 flex items-center justify-center text-neutral-500 text-xs">
-      Memuat Peta Interaktif...
+      Loading Interactive Map...
     </div>
   ),
 });
@@ -78,6 +80,7 @@ export default function OrderPage() {
   const [latitude, setLatitude] = useState(DEFAULT_WORKSHOP_COORDS.lat);
   const [longitude, setLongitude] = useState(DEFAULT_WORKSHOP_COORDS.lng);
   const [distanceKm, setDistanceKm] = useState(0);
+  const [mapPinTouched, setMapPinTouched] = useState(false);
 
   // Step 3: Schedule
   const [availableDates, setAvailableDates] = useState<any[]>([]);
@@ -97,32 +100,28 @@ export default function OrderPage() {
         const data = await res.json();
         if (data.success) {
           setServices(data.data);
-          try {
-            const raw = sessionStorage.getItem('fice_cart');
-            if (raw) {
-              sessionStorage.removeItem('fice_cart');
-              const prefill = JSON.parse(raw) as Record<string, number>;
-              const items: Record<string, SelectedItem> = {};
-              for (const s of data.data as Service[]) {
-                const qty = Number(prefill[s.id]) || 0;
-                if (qty > 0) {
-                  items[s.id] = {
-                    serviceId: s.id,
-                    serviceName: s.name,
-                    category: s.category,
-                    price: s.price,
-                    quantity: Math.min(50, Math.floor(qty)),
-                    itemNotes: '',
-                  };
-                }
-              }
-              if (Object.keys(items).length > 0) {
-                setSelectedItems(items);
-                setFromCatalog(true);
+          // Persistent cart: localStorage survives refresh/new tab. Do NOT
+          // delete here — it clears only after a successful order submit.
+          const prefill = readCart();
+          if (Object.keys(prefill).length > 0) {
+            const items: Record<string, SelectedItem> = {};
+            for (const s of data.data as Service[]) {
+              const qty = Number(prefill[s.id]) || 0;
+              if (qty > 0) {
+                items[s.id] = {
+                  serviceId: s.id,
+                  serviceName: s.name,
+                  category: s.category,
+                  price: s.price,
+                  quantity: Math.min(50, Math.floor(qty)),
+                  itemNotes: '',
+                };
               }
             }
-          } catch {
-            // cart prefill rusak, abaikan saja
+            if (Object.keys(items).length > 0) {
+              setSelectedItems(items);
+              setFromCatalog(true);
+            }
           }
         }
       } catch (err) {
@@ -146,23 +145,29 @@ export default function OrderPage() {
       const existing = prev[service.id];
       const newQty = (existing?.quantity || 0) + delta;
 
+      let next: Record<string, SelectedItem>;
       if (newQty <= 0) {
         const copy = { ...prev };
         delete copy[service.id];
-        return copy;
+        next = copy;
+      } else {
+        next = {
+          ...prev,
+          [service.id]: {
+            serviceId: service.id,
+            serviceName: service.name,
+            category: service.category,
+            price: service.price,
+            quantity: newQty,
+            itemNotes: existing?.itemNotes || '',
+          },
+        };
       }
-
-      return {
-        ...prev,
-        [service.id]: {
-          serviceId: service.id,
-          serviceName: service.name,
-          category: service.category,
-          price: service.price,
-          quantity: newQty,
-          itemNotes: existing?.itemNotes || '',
-        },
-      };
+      // Write-through so refresh keeps edits made on this page
+      const cart: Record<string, number> = {};
+      for (const it of Object.values(next)) cart[it.serviceId] = it.quantity;
+      writeCart(cart);
+      return next;
     });
   };
 
@@ -215,7 +220,7 @@ export default function OrderPage() {
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setPromoError(json.message || 'Kode promo tidak valid.');
+        setPromoError(json.message || 'Invalid promo code.');
         setAppliedPromo(null);
       } else {
         setAppliedPromo({
@@ -223,11 +228,11 @@ export default function OrderPage() {
           discountAmount: json.data.discountAmount,
           description: json.data.description,
         });
-        setPromoSuccess(json.data.message || 'Kode promo berhasil digunakan!');
+        setPromoSuccess(json.data.message || 'Promo code applied successfully!');
         setPromoCodeInput(json.data.code);
       }
     } catch (err) {
-      setPromoError('Gagal memvalidasi kode promo. Coba lagi.');
+      setPromoError('Failed to validate promo code. Please try again.');
     } finally {
       setPromoLoading(false);
     }
@@ -248,17 +253,25 @@ export default function OrderPage() {
   const eligibility = checkOrderEligibility(latitude, longitude, totalItemsCount);
 
   const canProceedStep1 = totalItemsCount > 0;
+  const selectedDateEntry = availableDates.find((d) => d.date === selectedDate);
+  const canProceedStep3 =
+    selectedDate !== '' &&
+    !!selectedDateEntry &&
+    selectedDateEntry.availableSlots.includes(selectedSlot);
+  const phoneValid = isValidPhone(customerPhone);
   const canProceedStep2 =
     customerName.trim() !== '' &&
-    customerPhone.trim().length >= 9 &&
+    phoneValid &&
     address.trim() !== '' &&
     district.trim() !== '' &&
+    mapPinTouched &&
     eligibility.allowed;
 
   const handleLocationChange = (lat: number, lng: number, dist: number) => {
     setLatitude(lat);
     setLongitude(lng);
     setDistanceKm(dist);
+    setMapPinTouched(true);
   };
 
   const handleSubmitOrder = async () => {
@@ -293,13 +306,15 @@ export default function OrderPage() {
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || 'Gagal mengirim pesanan');
+        throw new Error(json.error || 'Failed to submit order');
       }
 
+      // Order placed — persisted cart is now stale, drop it.
+      clearCart();
       router.push(`/track/${json.data.invoiceNumber}?just_ordered=true`);
     } catch (err: any) {
       console.error('Order submission error:', err);
-      setSubmitError(err.message || 'Terjadi kesalahan sistem. Silakan coba lagi.');
+      setSubmitError(err.message || 'A system error occurred. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -315,20 +330,20 @@ export default function OrderPage() {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f06a60]/10 text-[#f06a60] text-xs font-bold border border-[#f06a60]/30 mb-2">
                 <Truck className="w-3.5 h-3.5" />
-                100% Free Antar-Jemput
+                100% Free Pickup & Delivery
               </div>
               <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#0d1526] tracking-tight">
-                Pemesanan Antar-Jemput
+                Pickup & Delivery Order
               </h1>
               <p className="text-xs sm:text-sm text-neutral-600 mt-1">
-                Fice Shoes Care menjemput sepatu & tas kotor Anda langsung ke alamat rumah.
+                Fice Shoes Care picks up your dirty shoes & bags directly from your home address.
               </p>
             </div>
 
             {totalItemsCount > 0 && (
               <div className="bg-white border border-black/10 px-5 py-3 rounded-2xl shadow-xs text-right">
                 <span className="text-[11px] text-neutral-400 block font-bold uppercase">
-                  {totalItemsCount} Item Dipilih
+                  {totalItemsCount} Items Selected
                 </span>
                 <span className="font-heading font-bold text-xl sm:text-2xl text-[#f06a60]">
                   {formatRupiah(subtotal)}
@@ -352,7 +367,7 @@ export default function OrderPage() {
                 <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">
                   1
                 </span>
-                <span className="hidden sm:inline">Pilih Layanan</span>
+                <span className="hidden sm:inline">Select Service</span>
               </div>
 
               <div
@@ -367,7 +382,7 @@ export default function OrderPage() {
                 <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">
                   2
                 </span>
-                <span className="hidden sm:inline">Lokasi & Peta</span>
+                <span className="hidden sm:inline">Location & Map</span>
               </div>
 
               <div
@@ -382,7 +397,7 @@ export default function OrderPage() {
                 <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">
                   3
                 </span>
-                <span className="hidden sm:inline">Jadwal Jemput</span>
+                <span className="hidden sm:inline">Pickup Schedule</span>
               </div>
 
               <div
@@ -395,7 +410,7 @@ export default function OrderPage() {
                 <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">
                   4
                 </span>
-                <span className="hidden sm:inline">Pembayaran</span>
+                <span className="hidden sm:inline">Payment</span>
               </div>
             </div>
           </div>
@@ -406,11 +421,15 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
                   <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                    Ringkasan Item Pilihan Anda
+                    Your Selected Items Summary
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Diteruskan dari halaman Harga. Lanjutkan ke data penjemputan, atau ubah pilihan bila perlu.
+                    Forwarded from the Pricing page. Continue to pickup details, or change your selection if needed.
                   </p>
+                  <div className="mt-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-800 text-[11px] font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    Keranjang tersimpan otomatis — aman refresh halaman atau kembali lagi nanti. Terhapus setelah pesanan berhasil dibuat.
+                  </div>
                 </div>
 
                 <ul className="divide-y divide-black/[0.06]">
@@ -444,19 +463,19 @@ export default function OrderPage() {
                     onClick={() => {
                       const cart: Record<string, number> = {};
                       for (const it of selectedItemsArray) cart[it.serviceId] = it.quantity;
-                      sessionStorage.setItem('fice_cart', JSON.stringify(cart));
+                      writeCart(cart);
                       router.push('/harga');
                     }}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-black/15 text-[#0d1526] font-bold text-sm px-6 py-4 rounded-full hover:bg-[#f2ece5] transition-colors"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-black/15 text-[#0d1526] font-bold text-sm px-6 py-4 rounded-2xl hover:bg-[#f2ece5] transition-colors"
                   >
-                    Ubah Pilihan di Halaman Harga
+                    Change on Pricing Page
                   </button>
                   <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
-                    className="flex-1 group relative inline-flex items-center justify-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white font-heading font-bold text-base uppercase tracking-normal px-8 py-4 rounded-full transition-all duration-300 active:scale-95 overflow-hidden"
+                    className="flex-1 group relative inline-flex items-center justify-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white font-heading font-bold text-base uppercase tracking-normal px-8 py-4 rounded-2xl transition-all duration-300 active:scale-95 overflow-hidden"
                   >
-                    <span className="transition-colors duration-300">Lanjut ke Lokasi &amp; Peta</span>
+                    <span className="transition-colors duration-300">Continue to Location &amp; Map</span>
                     <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                   </button>
                 </div>
@@ -471,20 +490,20 @@ export default function OrderPage() {
                 <div className="border-b border-black/[0.06] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                      Pilih Item yang Ingin Dicuci
+                      Select Items to Clean
                     </h2>
                     <p className="text-xs text-neutral-500 mt-0.5">
-                      Klik tanda plus (+) untuk menambah kuantitas sepatu, tas, atau topi.
+                      Click the plus (+) sign to add quantity for shoes, bags, or hats.
                     </p>
                   </div>
 
                   {/* Category Filter Tabs */}
                   <div className="flex flex-wrap items-center gap-1.5 bg-[#f2ece5]/70 p-1.5 rounded-2xl border border-black/[0.06] self-start sm:self-auto">
                     {[
-                      { id: 'all', label: 'Semua' },
-                      { id: 'shoes', label: 'Sepatu' },
-                      { id: 'bag', label: 'Tas' },
-                      { id: 'accessories', label: 'Aksesoris' },
+                      { id: 'all', label: 'All' },
+                      { id: 'shoes', label: 'Shoes' },
+                      { id: 'bag', label: 'Bags' },
+                      { id: 'accessories', label: 'Accessories' },
                     ].map((cat) => {
                       const isActive = categoryFilter === cat.id;
                       const count = Object.values(selectedItems)
@@ -520,7 +539,7 @@ export default function OrderPage() {
 
                 {loadingServices ? (
                   <div className="py-12 text-center text-neutral-400 text-xs">
-                    Memuat katalog layanan...
+                    Loading service catalog...
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -584,13 +603,13 @@ export default function OrderPage() {
                           {qty > 0 && (
                             <div className="mt-3 pt-3 border-t border-black/[0.06]">
                               <label className="text-[11px] font-bold text-neutral-600 block mb-1">
-                                Catatan Khusus Sepatu / Warna / Ukuran:
+                                Special Notes / Color / Size:
                               </label>
                               <input
                                 type="text"
                                 value={selectedItems[srv.id]?.itemNotes || ''}
                                 onChange={(e) => handleItemNotesChange(srv.id, e.target.value)}
-                                placeholder="Contoh: Nike Dunk Low Panda size 42, sol sedikit menguning"
+                                placeholder="e.g. Nike Dunk Low Panda size 42, sole slightly yellowed"
                                 className="w-full text-xs px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#f06a60]"
                               />
                             </div>
@@ -606,13 +625,13 @@ export default function OrderPage() {
               <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-black/[0.08] shadow-xs">
                 <div>
                   <span className="text-xs text-neutral-400 block font-bold uppercase">
-                    Subtotal Pesanan:
+                    Order Subtotal:
                   </span>
                   <span className="font-heading font-bold text-2xl text-[#000000]">
                     {formatRupiah(subtotal)}
                   </span>
                   <span className="text-[11px] text-neutral-500 block">
-                    ({totalItemsCount} item dipilih)
+                    ({totalItemsCount} items selected)
                   </span>
                 </div>
 
@@ -623,9 +642,9 @@ export default function OrderPage() {
                     setCurrentStep(2);
                   }}
                   disabled={!canProceedStep1}
-                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-full disabled:opacity-40 transition-all shadow-md active:scale-98"
+                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-98"
                 >
-                  <span>Lanjut ke Alamat</span>
+                  <span>Continue to Address</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </button>
               </div>
@@ -639,10 +658,10 @@ export default function OrderPage() {
                 <div className="border-b border-black/[0.06] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                      Alamat & Titik Penjemputan
-                    </h2>
-                    <p className="text-xs text-neutral-500 mt-0.5">
-                      Tentukan koordinat titik rumah Anda agar kurir dapat menjemput tepat waktu.
+                    Address & Pickup Location
+                  </h2>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Set your home coordinates so the courier can pick up on time.
                     </p>
                   </div>
                   <span className="text-xs font-bold px-3.5 py-1 rounded-full bg-[#f06a60]/10 text-[#f06a60] border border-[#f06a60]/30 w-fit">
@@ -653,35 +672,40 @@ export default function OrderPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-neutral-700 block mb-1">
-                      Nama Lengkap Anda *
+                      Full Name *
                     </label>
                     <input
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Contoh: Dimas Prasetyo"
+                      placeholder="e.g. Dimas Prasetyo"
                       className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                     />
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-neutral-700 block mb-1">
-                      Nomor WhatsApp Aktif * (untuk koordinasi kurir)
+                      Active WhatsApp Number * (for courier coordination)
                     </label>
                     <input
                       type="tel"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="Contoh: 081234567890"
+                      placeholder="e.g. 081234567890"
                       className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                     />
+                    {customerPhone.trim() !== '' && !phoneValid && (
+                      <p className="text-[11px] font-semibold text-rose-600 mt-1">
+                        {PHONE_HINT}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-neutral-700 block mb-1">
-                      Kota / Wilayah Layanan *
+                      City / Service Area *
                     </label>
                     <select
                       value={city}
@@ -701,14 +725,14 @@ export default function OrderPage() {
 
                   <div>
                     <label className="text-xs font-bold text-neutral-700 block mb-1">
-                      Kecamatan *
+                      District *
                     </label>
                     <select
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
                       className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white font-medium"
                     >
-                      <option value="">-- Pilih Kecamatan --</option>
+                      <option value="">-- Select District --</option>
                       {COVERAGE_AREAS[city as keyof typeof COVERAGE_AREAS]?.map((d) => (
                         <option key={d} value={d}>
                           {d}
@@ -719,27 +743,27 @@ export default function OrderPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">
-                    Alamat Lengkap (Jalan, No. Rumah, RT/RW, Cluster) *
-                  </label>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">
+                      Full Address (Street, House No., RT/RW, Cluster) *
+                    </label>
                   <textarea
                     rows={2}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Contoh: Jl. Maleo Blok JB 3 No. 12, Sektor 9 Bintaro Jaya"
+                    placeholder="e.g. Jl. Maleo Blok JB 3 No. 12, Sektor 9 Bintaro Jaya"
                     className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">
-                    Patokan Rumah (Opsional)
-                  </label>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">
+                      Landmark (Optional)
+                    </label>
                   <input
                     type="text"
                     value={addressNotes}
                     onChange={(e) => setAddressNotes(e.target.value)}
-                    placeholder="Contoh: Pagar hitam depan lapangan badminton"
+                    placeholder="e.g. Black gate in front of the badminton court"
                     className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                   />
                 </div>
@@ -748,8 +772,14 @@ export default function OrderPage() {
                 <div className="pt-2">
                   <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 mb-2">
                     <MapPin className="w-4 h-4 text-[#f06a60]" />
-                    Tentukan Titik Pinpoint Rumah Anda di Peta:
+                    Set Your Home Pinpoint on the Map: *
                   </label>
+                  {!mapPinTouched && (
+                    <div className="mb-2 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-800 text-[11px] font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      Geser pin merah ke lokasi rumah Anda — pin masih di workshop. Tombol lanjut aktif setelah pin disentuh.
+                    </div>
+                  )}
                   <MapPicker
                     initialLat={latitude}
                     initialLng={longitude}
@@ -761,7 +791,7 @@ export default function OrderPage() {
                   <div className="p-4 bg-[#fff5f5] rounded-2xl border border-[#f06a60]/30 text-[#f06a60] text-xs space-y-2">
                     <div className="flex items-center gap-2 font-bold">
                       <AlertTriangle className="w-4 h-4 shrink-0" />
-                      Perhatian: Syarat Minimal Order Antar-Jemput
+                      Notice: Minimum Order Requirement for Pickup & Delivery
                     </div>
                     <p className="leading-relaxed text-neutral-800">{eligibility.message}</p>
                     <button
@@ -769,7 +799,7 @@ export default function OrderPage() {
                       onClick={() => setCurrentStep(1)}
                       className="font-bold underline text-[#f06a60] pt-1 block"
                     >
-                      ← Tambah sepatu atau tas di Step 1
+                      ← Add shoes or bags in Step 1
                     </button>
                   </div>
                 )}
@@ -780,19 +810,19 @@ export default function OrderPage() {
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-full hover:bg-[#f2ece5]"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-2xl hover:bg-[#f2ece5]"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Kembali
+                  Back
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setCurrentStep(3)}
                   disabled={!canProceedStep2}
-                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-full disabled:opacity-40 transition-all shadow-md active:scale-98"
+                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-98"
                 >
-                  <span>Lanjut ke Jadwal</span>
+                  <span>Continue to Schedule</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </button>
               </div>
@@ -805,10 +835,10 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
                   <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                    Pilih Hari & Slot Jam Penjemputan
+                    Select Pickup Day & Time Slot
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Kurir Fice Shoes Care menjemput setiap hari pukul 09.00 - 18.00 WIB.
+                    Fice Shoes Care courier picks up daily from 09:00 to 18:00 WIB.
                   </p>
                 </div>
 
@@ -816,10 +846,10 @@ export default function OrderPage() {
                   <Clock className="w-4 h-4 text-[#f06a60] shrink-0 mt-0.5" />
                   <div>
                     <strong className="block mb-0.5 text-[#000000]">
-                      Aturan Penjemputan Cepat (Cut-Off 13.00 WIB):
+                      Fast Pickup Rule (Cut-Off 13:00 WIB):
                     </strong>
                     <span className="text-neutral-600">
-                      Order sebelum jam 13.00 WIB bisa dijemput di hari yang sama (Slot Siang/Sore). Di atas jam 13.00 WIB, opsi jemput tercepat dimulai besok (H+1).
+                      Orders before 13:00 WIB can be picked up the same day (Afternoon/Evening Slot). After 13:00 WIB, the earliest pickup starts tomorrow (H+1).
                     </span>
                   </div>
                 </div>
@@ -827,7 +857,7 @@ export default function OrderPage() {
                 {/* Dates */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-neutral-700 block">
-                    Pilih Hari Penjemputan:
+                    Select Pickup Day:
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {availableDates.map((item) => (
@@ -850,7 +880,7 @@ export default function OrderPage() {
                           {item.label}
                         </span>
                         <span className="text-[10px] text-neutral-400 mt-1 block font-semibold">
-                          {item.isToday ? 'Slot Terbatas' : 'Tersedia'}
+                          {item.isToday ? 'Limited Slots' : 'Available'}
                         </span>
                       </button>
                     ))}
@@ -860,7 +890,7 @@ export default function OrderPage() {
                 {/* Slots */}
                 <div className="space-y-2 pt-3">
                   <label className="text-xs font-bold text-neutral-700 block">
-                    Pilih Slot Jam Penjemputan:
+                    Select Pickup Time Slot:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
@@ -875,14 +905,14 @@ export default function OrderPage() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-heading font-bold text-sm text-[#000000]">
-                          Slot Pagi / Siang
+                          Morning / Midday Slot
                         </span>
                         <span className="text-[11px] font-bold text-[#000000] bg-[#f2ece5] px-2.5 py-0.5 rounded-full">
                           09.00 - 13.00 WIB
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-500">
-                        Penjemputan sebelum istirahat siang.
+                        Pickup before lunch break.
                       </p>
                     </button>
 
@@ -897,14 +927,14 @@ export default function OrderPage() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-heading font-bold text-sm text-[#000000]">
-                          Slot Siang / Sore
+                          Afternoon / Evening Slot
                         </span>
                         <span className="text-[11px] font-bold text-[#000000] bg-[#f2ece5] px-2.5 py-0.5 rounded-full">
                           14.00 - 18.00 WIB
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-500">
-                        Penjemputan santai di sore hari.
+                        Relaxed pickup in the afternoon.
                       </p>
                     </button>
                   </div>
@@ -916,18 +946,19 @@ export default function OrderPage() {
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-full hover:bg-[#f2ece5]"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-2xl hover:bg-[#f2ece5]"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Kembali
+                  Back
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setCurrentStep(4)}
-                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-full transition-all shadow-md active:scale-98"
+                  disabled={!canProceedStep3}
+                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-[18px] tracking-normal uppercase px-8 py-4 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-98"
                 >
-                  <span>Lanjut ke Pembayaran</span>
+                  <span>Continue to Payment</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </button>
               </div>
@@ -940,10 +971,10 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
                   <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
-                    Pembayaran
+                    Payment
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Satu metode, satu kali bayar, dengan rekening resmi yang bisa dicek.
+                    One method, one-time payment, with an official account you can verify.
                   </p>
                 </div>
 
@@ -953,25 +984,25 @@ export default function OrderPage() {
                       <CreditCard className="w-4.5 h-4.5" />
                     </div>
                     <h3 className="font-heading font-bold text-[#0d1526] text-base">
-                      Transfer Bank Setelah Verifikasi di Workshop
+                      Bank Transfer After Workshop Verification
                     </h3>
                   </div>
                   <p className="text-xs text-neutral-600 leading-relaxed">
-                    Sepatu dijemput, tiba di workshop, kondisi fisiknya dicek dan difoto QC awal.
-                    Tagihan resmi terbit di halaman lacak pesanan, Anda bayar via transfer ke rekening
-                    BCA yang tertera di sana, lalu pengerjaan dimulai.
+                    Shoes are picked up, arrive at the workshop, physical condition is checked and QC photos are taken.
+                    The official invoice is issued on the order tracking page, you pay via transfer to the BCA
+                    account listed there, then work begins.
                   </p>
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-neutral-700 block mb-1">
-                    Catatan untuk Kurir (Opsional)
+                    Notes for Courier (Optional)
                   </label>
                   <textarea
                     rows={2}
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
-                    placeholder="Contoh: Tolong bawa kantong tambahan karena sedang hujan."
+                    placeholder="e.g. Please bring extra bags since it's raining."
                     className="w-full text-sm px-4 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-white"
                   />
                 </div>
@@ -981,11 +1012,11 @@ export default function OrderPage() {
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
                       <Tag className="w-4 h-4 text-[#f06a60]" />
-                      Punya Kode Promo / Voucher?
+                      Have a Promo / Voucher Code?
                     </label>
                     {appliedPromo && (
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                        Voucher Digunakan
+                        Voucher Applied
                       </span>
                     )}
                   </div>
@@ -1000,7 +1031,7 @@ export default function OrderPage() {
                             setPromoCodeInput(e.target.value.toUpperCase());
                             setPromoError(null);
                           }}
-                          placeholder="Masukkan Kode Promo (cth: FICEBARU)"
+                          placeholder="Enter Promo Code (e.g. FICEBARU)"
                           className="w-full text-xs font-mono font-bold uppercase pl-9 pr-3 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-[#fdf8f1]"
                         />
                         <Ticket className="w-4 h-4 text-neutral-400 absolute left-3 top-3.5" />
@@ -1011,7 +1042,7 @@ export default function OrderPage() {
                         disabled={promoLoading || !promoCodeInput.trim()}
                         className="bg-[#0d1526] hover:bg-[#f06a60] text-white font-bold text-xs px-5 py-3 rounded-2xl transition-all disabled:opacity-40 cursor-pointer shrink-0"
                       >
-                        {promoLoading ? 'Mengecek...' : 'Terapkan'}
+                        {promoLoading ? 'Checking...' : 'Apply'}
                       </button>
                     </div>
                   ) : (
@@ -1026,7 +1057,7 @@ export default function OrderPage() {
                               {appliedPromo.code}
                             </span>
                             <span className="text-[11px] font-bold text-emerald-700">
-                              Hemat {formatRupiah(appliedPromo.discountAmount)}
+                              Save {formatRupiah(appliedPromo.discountAmount)}
                             </span>
                           </div>
                           {appliedPromo.description && (
@@ -1040,7 +1071,7 @@ export default function OrderPage() {
                         type="button"
                         onClick={handleRemovePromo}
                         className="text-xs text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors cursor-pointer"
-                        title="Batalkan Promo"
+                        title="Remove Promo"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1064,7 +1095,7 @@ export default function OrderPage() {
                 {/* Final Recap */}
                 <div className="p-5 bg-[#fdf8f1] rounded-3xl border border-black/[0.08] space-y-3">
                   <h4 className="font-heading font-bold text-xs uppercase tracking-wider text-neutral-500">
-                    Ringkasan Akhir Pesanan
+                    Final Order Summary
                   </h4>
 
                   <div className="space-y-1.5 text-xs">
@@ -1078,14 +1109,14 @@ export default function OrderPage() {
                     ))}
 
                     <div className="flex justify-between text-neutral-600 pt-2 border-t border-black/[0.06]">
-                      <span>Subtotal Perawatan:</span>
+                      <span>Service Subtotal:</span>
                       <span className="font-bold">{formatRupiah(subtotal)}</span>
                     </div>
 
                     {appliedPromo && discountAmount > 0 && (
                       <div className="flex justify-between text-emerald-600 font-bold">
                         <span className="flex items-center gap-1">
-                          <Tag className="w-3.5 h-3.5" /> Diskon Promo ({appliedPromo.code}):
+                          <Tag className="w-3.5 h-3.5" /> Promo Discount ({appliedPromo.code}):
                         </span>
                         <span>-{formatRupiah(discountAmount)}</span>
                       </div>
@@ -1093,15 +1124,15 @@ export default function OrderPage() {
 
                     <div className="flex justify-between text-[#f06a60] font-bold">
                       <span className="flex items-center gap-1">
-                        <Truck className="w-3.5 h-3.5" /> Biaya Antar-Jemput ({distanceKm} km):
+                        <Truck className="w-3.5 h-3.5" /> Pickup & Delivery Fee ({distanceKm} km):
                       </span>
                       <span className="bg-[#f06a60]/10 text-[#f06a60] px-2.5 py-0.5 rounded-full text-[11px]">
-                        100% GRATIS
+                        100% FREE
                       </span>
                     </div>
 
                     <div className="flex justify-between text-base font-heading font-bold text-[#0d1526] pt-2 border-t border-black/[0.06]">
-                      <span>Total Pembayaran:</span>
+                      <span>Total Payment:</span>
                       <div className="text-right">
                         {discountAmount > 0 && (
                           <span className="text-xs text-neutral-400 line-through mr-2 font-normal">
@@ -1116,8 +1147,8 @@ export default function OrderPage() {
                   <div className="pt-2 text-[11px] text-neutral-500 flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-[#f06a60] shrink-0" />
                     <span>
-                      Jadwal Jemput: <strong>{selectedDate}</strong> (
-                      {selectedSlot === 'morning' ? '09.00 - 13.00' : '14.00 - 18.00'})
+                      Pickup Schedule: <strong>{selectedDate}</strong> (
+                      {selectedSlot === 'morning' ? '09:00 - 13:00' : '14:00 - 18:00'})
                     </span>
                   </div>
                 </div>
@@ -1136,24 +1167,24 @@ export default function OrderPage() {
                   type="button"
                   onClick={() => setCurrentStep(3)}
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-full hover:bg-[#f2ece5] disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold uppercase tracking-normal text-neutral-600 hover:text-black px-5 py-3 rounded-2xl hover:bg-[#f2ece5] disabled:opacity-50"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Kembali
+                  Back
                 </button>
 
                 <button
                   type="button"
                   onClick={handleSubmitOrder}
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-lg lg:text-[19px] tracking-normal uppercase px-9 py-4.5 rounded-full shadow-lg transition-all active:scale-98 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] text-white font-heading font-bold text-base sm:text-lg lg:text-[19px] tracking-normal uppercase px-9 py-4.5 rounded-2xl shadow-lg transition-all active:scale-98 disabled:opacity-50"
                 >
                   {isSubmitting ? (
-                    'Memproses Pesanan...'
+                    'Processing Order...'
                   ) : (
                     <>
                       <CheckCircle2 className="w-5 h-5" />
-                      <span>Konfirmasi &amp; Buat Pesanan</span>
+                      <span>Confirm &amp; Place Order</span>
                     </>
                   )}
                 </button>

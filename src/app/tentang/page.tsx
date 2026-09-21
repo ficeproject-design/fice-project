@@ -4,7 +4,65 @@ import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Heart, Users, ArrowRight, BadgeCheck, Sparkles, Quote } from 'lucide-react';
+import {
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Camera,
+  Truck,
+  CheckCircle2,
+  MapPin,
+  Clock,
+  Star,
+} from 'lucide-react';
+
+const WHY_CHOOSE = [
+  {
+    num: '01',
+    title: 'Before & After QC Photos',
+    desc: 'Setiap sepatu yang masuk difoto kondisi awalnya. Anda bisa lihat sendiri perbandingan before vs. after-nya — transparan, tanpa drama.',
+  },
+  {
+    num: '02',
+    title: 'Free Pickup & Delivery',
+    desc: 'Jaksel, Tangsel, Tangerang — jemput antar gratis tanpa minimum order. Cukup booking, kurir datang ke rumah Anda.',
+  },
+  {
+    num: '03',
+    title: 'Experienced Technicians',
+    desc: 'Bukan cuci mesin massal. Setiap sepatu dibersihkan manual oleh teknisi yang sudah berpengalaman di premium shoes care.',
+  },
+  {
+    num: '04',
+    title: 'Premium Formulas',
+    desc: 'Kami gunakan formula khusus yang aman untuk semua material — kulit, suede, canvas, nylon. Tanpa deterjen keras yang merusak.',
+  },
+];
+
+const STEPS = [
+  {
+    icon: <Sparkles className="w-6 h-6 text-[#f06a60]" />,
+    title: 'Book Online',
+    desc: 'Pilih layanan, tentukan jadwal jemput, dan checkout dalam 2 menit.',
+  },
+  {
+    icon: <Truck className="w-6 h-6 text-[#f06a60]" />,
+    title: 'Courier Picks Up',
+    desc: 'Kurir kami datang ke rumah Anda, jemput sepatu — gratis, tanpa ribet.',
+  },
+  {
+    icon: <Camera className="w-6 h-6 text-[#f06a60]" />,
+    title: 'Cleaned at Workshop',
+    desc: 'Sepatu difoto kondisi awal, dibersihkan oleh teknisi, lalu difoto hasil akhir.',
+  },
+  {
+    icon: <CheckCircle2 className="w-6 h-6 text-[#f06a60]" />,
+    title: 'Delivered Back',
+    desc: 'Sepatu bersih, foto QC ter-upload, lalu dikirim balik ke alamat Anda.',
+  },
+];
+
+
 
 export default function TentangPage() {
   return (
@@ -13,30 +71,37 @@ export default function TentangPage() {
 
       <main className="flex-1">
 
-        {/* HERO SECTION */}
-        <section className="pt-16 sm:pt-24 pb-12 sm:pb-16">
+        {/* HERO */}
+        <section className="pt-14 sm:pt-20 pb-12 sm:pb-16">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
-                  <Sparkles className="w-4 h-4 text-[#f06a60]" />
-                  Cerita di Balik Fice
+                  <MapPin className="w-4 h-4 text-[#f06a60]" />
+                  Jaksel &middot; Tangsel &middot; Tangerang
                 </div>
-                <h1 className="font-heading font-bold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-[#0d1526] leading-[0.9]">
-                  Dari Passion<br />
-                  <span className="text-[#f06a60]">Jadi Kepercayaan</span>
+                <h1 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight text-[#0d1526] leading-[0.9]">
+                  Clean Shoes,<br />
+                  <span className="text-[#f06a60]">Happy You.</span>
                 </h1>
-                <p className="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-xl font-body">
-                  Fice Shoes Care bukan sekadar jasa cuci sepatu. Ini adalah cerita tentang pengalaman,
-                  keberanian, dan ikatan keluarga yang tumbuh menjadi bisnis berbasis kepercayaan.
+                <p className="text-sm sm:text-base text-neutral-600 leading-relaxed max-w-xl font-body">
+                  Fice Shoes Care adalah layanan cuci sepatu profesional dengan jemput antar gratis, foto QC transparan, dan teknisi berpengalaman — langsung dari workshop kami di Bintaro.
                 </p>
-                <Link
-                  href="/order"
-                  className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-full shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95"
-                >
-                  <span>Pesan Sekarang</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <Link
+                    href="/order"
+                    className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95"
+                  >
+                    <span>Book Now</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/harga"
+                    className="inline-flex items-center gap-2 bg-[#f2ece5] hover:bg-[#eae2d9] text-[#0d1526] font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-2xl border border-black/[0.06] transition-all duration-300"
+                  >
+                    See Pricing
+                  </Link>
+                </div>
               </div>
 
               <div className="relative rounded-[32px] overflow-hidden h-[420px] sm:h-[500px] bg-[#f2ece5]">
@@ -51,156 +116,128 @@ export default function TentangPage() {
           </div>
         </section>
 
-        {/* CERITA PENDIRI */}
-        <section className="py-20 sm:py-24 bg-[#f2ece5]/50 border-t border-black/[0.05]">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-              <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-5">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
-                  <Quote className="w-3.5 h-3.5 text-[#f06a60]" />
-                  Kisah Kami
-                </div>
-                <h2 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight text-[#0d1526]">
-                  Bagaimana Fice Lahir
-                </h2>
-                <div className="w-16 h-1.5 bg-[#f06a60] rounded-full" />
-                <div className="rounded-[24px] overflow-hidden h-64 sm:h-80 bg-[#eae2d9]">
-                  <img
-                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=700&auto=format&fit=crop&q=85"
-                    alt="Sepatu bersih hasil cuci Fice"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
 
-              <div className="lg:col-span-8 space-y-8 font-body text-base sm:text-lg text-neutral-700 leading-relaxed">
-                <div className="bg-white rounded-[24px] p-7 sm:p-9 border border-black/[0.06] shadow-xs space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-[#f06a60] flex items-center justify-center shrink-0">
-                      <span className="text-white font-heading font-bold text-lg">01</span>
-                    </div>
-                    <h3 className="font-heading font-bold text-xl text-[#0d1526]">Lahir dari Pengalaman Industri yang Nyata</h3>
-                  </div>
-                  <p>
-                    Fice Shoes Care bukan dibangun dari nol tanpa bekal. Fondasi kami berasal dari pengalaman
-                    langsung bekerja sebagai teknisi di salah satu <em>shoes care</em> premium di Jakarta —
-                    tempat di mana standar kualitas, ketelitian proses, dan tanggung jawab terhadap setiap
-                    item pelanggan benar-benar diuji setiap harinya.
-                  </p>
-                  <p>
-                    Pengalaman itu membentuk cara Fice bekerja: setiap sepatu yang masuk diperlakukan
-                    dengan standar yang sama seperti milik sendiri.
-                  </p>
-                </div>
 
-                <div className="bg-white rounded-[24px] p-7 sm:p-9 border border-black/[0.06] shadow-xs space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-[#0d1526] flex items-center justify-center shrink-0">
-                      <span className="text-white font-heading font-bold text-lg">02</span>
-                    </div>
-                    <h3 className="font-heading font-bold text-xl text-[#0d1526]">Workshop Kecil, Standar yang Tidak Kecil</h3>
-                  </div>
-                  <p>
-                    Fice memulai perjalanan dari sebuah workshop skala kecil — bukan karena keterbatasan,
-                    tapi karena kami percaya bahwa kualitas tidak ditentukan oleh besarnya fasilitas,
-                    melainkan oleh ketelitian proses dan integritas tim yang mengerjakannya.
-                  </p>
-                  <p>
-                    Dari sana, Fice tumbuh perlahan dengan menjaga satu hal yang tidak pernah berubah:
-                    setiap pelanggan diperlakukan secara personal, bukan sekadar nomor antrian.
-                    Kepercayaan yang dibangun satu per satu itulah yang membawa Fice sampai hari ini.
-                  </p>
-                </div>
-
-                <div className="bg-[#0d1526] rounded-[24px] p-7 sm:p-9 shadow-xs space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-[#f06a60] flex items-center justify-center shrink-0">
-                      <span className="text-white font-heading font-bold text-lg">03</span>
-                    </div>
-                    <h3 className="font-heading font-bold text-xl text-white">Customer Relationship adalah Fondasi Kami</h3>
-                  </div>
-                  <p className="text-neutral-300">
-                    Dari hari pertama, kami berpegang teguh pada satu prinsip: <strong className="text-white">hubungan dengan pelanggan
-                    adalah segalanya</strong>. Bukan hanya transaksi jual-beli jasa, tapi relasi jangka panjang
-                    yang dibangun di atas kepercayaan, komunikasi, dan hasil kerja yang bisa dipertanggungjawabkan.
-                  </p>
-                  <p className="text-neutral-300">
-                    Dan kini, dengan lahirnya website Fice Shoes Care, kami ingin menghadirkan kemudahan itu
-                    lebih jauh lagi — agar pelanggan bisa memesan, melacak status, dan berkomunikasi dengan
-                    kami kapan saja dan di mana saja. Ini bukan sekadar upgrade teknologi; ini adalah
-                    wujud nyata komitmen kami untuk terus bertumbuh bersama pelanggan.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* VALUES */}
+        {/* KENAPA PILIH FICE */}
         <section className="py-20 sm:py-24 bg-[#fdf8f1]">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="text-center space-y-4 mb-14">
+            <div className="text-center space-y-3 mb-14 max-w-2xl mx-auto">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
-                <Heart className="w-4 h-4 text-[#f06a60]" />
-                Nilai-Nilai Kami
+                <ShieldCheck className="w-4 h-4 text-[#f06a60]" />
+                Why Fice?
               </div>
-              <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                Yang Kami Pegang Teguh
+              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                Not Just Another Shoe Cleaning
               </h2>
+              <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
+                Kami beda dari tempat cuci sepatu lainnya. Ini alasan kenapa ribuan pelanggan mempercayakan sepatu mereka ke Fice.
+              </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7">
-              {[
-                {
-                  icon: <BadgeCheck className="w-7 h-7 text-[#f06a60]" />,
-                  title: 'Pengalaman Nyata',
-                  desc: 'Bukan belajar dari YouTube. Kami punya pengalaman langsung bekerja di shoes care premium sebelum membuka usaha sendiri. Setiap teknik yang kami terapkan sudah teruji.',
-                },
-                {
-                  icon: <Users className="w-7 h-7 text-[#f06a60]" />,
-                  title: 'Dedikasi & Kepercayaan',
-                  desc: 'Fice dibangun di atas kepercayaan, bukan sekadar transaksi. Setiap order dijalankan dengan dedikasi penuh — karena reputasi yang baik lebih berharga dari sekedar omzet.',
-                },
-                {
-                  icon: <Heart className="w-7 h-7 text-[#f06a60]" />,
-                  title: 'Customer First',
-                  desc: 'Kami tidak hanya mencuci sepatu, kami menjaga hubungan. Dari proses jemput, update status, hingga antar kembali — komunikasi aktif adalah standar pelayanan kami.',
-                },
-              ].map((v, i) => (
-                <div key={i} className="bg-[#f2ece5] rounded-[28px] p-7 sm:p-8 border border-black/[0.04] hover:border-[#f06a60]/30 hover:shadow-xl transition-all duration-300 space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-xs">
-                    {v.icon}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+              {WHY_CHOOSE.map((item, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-[28px] p-7 sm:p-8 border border-black/[0.06] hover:border-[#f06a60]/30 hover:shadow-xl transition-all duration-300 group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#0d1526] flex items-center justify-center shrink-0 group-hover:bg-[#f06a60] transition-colors duration-300">
+                      <span className="font-heading font-black text-white text-lg">{item.num}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-heading font-black text-xl sm:text-2xl text-[#0d1526]">{item.title}</h3>
+                      <p className="text-sm sm:text-base text-neutral-600 font-body leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
-                  <h3 className="font-heading font-bold text-2xl text-[#0d1526]">{v.title}</h3>
-                  <p className="font-body text-sm sm:text-base text-neutral-600 leading-relaxed">{v.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-
-        {/* CTA */}
-        <section className="py-20 sm:py-24 bg-[#0d1526]">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-white/80 border border-white/15">
-              <Sparkles className="w-4 h-4 text-[#f06a60]" />
-              Siap Merawat Sepatu Anda?
+        {/* PROSES KERJA */}
+        <section className="py-20 sm:py-24 bg-[#f2ece5]/50 border-t border-black/[0.05]">
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="text-center space-y-3 mb-14 max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
+                <Clock className="w-4 h-4 text-[#f06a60]" />
+                How It Works
+              </div>
+              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                Just 4 Steps
+              </h2>
+              <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
+                Dari booking sampai sepatu bersih kembali ke tangan Anda — semuanya serba mudah dan transparan.
+              </p>
             </div>
-            <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-white">
-              Percayakan Sepatu Anda<br />
-              <span className="text-[#f06a60]">ke Tangan yang Tepat</span>
-            </h2>
-            <p className="text-base sm:text-lg text-neutral-400 font-body leading-relaxed">
-              Gratis antar-jemput untuk wilayah Jaksel, Tangsel & Tangerang. Pesan sebelum jam 13:00 untuk penjemputan hari ini.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-              <Link href="/order" className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-white text-white hover:text-[#0d1526] font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-8 py-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300 active:scale-95">
-                <span>Book Cleaning</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link href="/#layanan" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-8 py-4 rounded-full border border-white/15 hover:border-white/30 transition-all duration-300">
-                Lihat Layanan
-              </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+              {STEPS.map((step, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-[28px] p-7 sm:p-8 border border-black/[0.06] text-center space-y-4 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-[#fdf8f1] flex items-center justify-center mx-auto border border-[#f06a60]/20">
+                    {step.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-xl sm:text-2xl text-[#0d1526] mb-2">{step.title}</h3>
+                    <p className="text-sm text-neutral-600 font-body leading-relaxed">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CERITA SINGKAT */}
+        <section className="py-20 sm:py-24 bg-[#fdf8f1] border-t border-black/[0.05]">
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <div className="relative rounded-[32px] overflow-hidden h-[420px] sm:h-[520px] bg-[#f2ece5]">
+                <img
+                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=85"
+                  alt="Workshop Fice Shoes Care"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-[32px]" />
+                <div className="absolute bottom-6 left-6 right-6 bg-[#0d1526]/80 backdrop-blur-md text-white px-6 py-4 rounded-2xl border border-white/10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Star className="w-4 h-4 text-[#f06a60] fill-[#f06a60]" />
+                    <span className="font-heading font-bold text-sm">Workshop Kami di Bintaro</span>
+                  </div>
+                  <p className="text-xs text-neutral-400">Jl. Bintaro Utama, Tangerang Selatan</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
+                  <Sparkles className="w-4 h-4 text-[#f06a60]" />
+                  Our Story
+                </div>
+                <h2 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl tracking-tight text-[#0d1526] leading-tight">
+                  From Premium Technician<br />
+                  <span className="text-[#f06a60]">To Our Own Business</span>
+                </h2>
+                <div className="space-y-4 font-body text-sm sm:text-base text-neutral-600 leading-relaxed">
+                  <p>
+                    Fice Shoes Care tidak dibangun dari nol tanpa dasar. Akar kami berasal dari pengalaman langsung bekerja sebagai teknisi di premium shoes care di Jakarta — di mana standar kualitas, presisi proses, dan pertanggungjawaban atas setiap item pelanggan diuji setiap hari.
+                  </p>
+                  <p>
+                    Pengalaman itu membentuk cara Fice bekerja: setiap sepatu yang masuk diperlakukan dengan standar yang sama seperti milik kami sendiri. Dari situ, kami berkembang perlahan sambil menjaga satu hal tetap sama — setiap pelanggan diperlakukan secara personal, bukan sekadar nomor antrean.
+                  </p>
+                  <p>
+                    Kini, dengan website dan sistem tracking online, kami ingin membawa kemudahan itu lebih jauh — agar Anda bisa memesan, melacak status, dan berkomunikasi dengan kami kapan saja, di mana saja.
+                  </p>
+                </div>
+                <Link
+                  href="/order"
+                  className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95"
+                >
+                  <span>Try Now</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </div>
         </section>

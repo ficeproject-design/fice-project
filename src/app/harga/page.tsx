@@ -12,20 +12,20 @@ export default function HargaPage() {
 
       <main className="flex-1">
         <section className="pt-14 sm:pt-20 pb-8">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <h1 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526] leading-[0.95]">
-              Harga Layanan
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+            <h1 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526] leading-[0.95]">
+              Service Pricing
             </h1>
             <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mt-3 leading-relaxed">
-              Tarif per item, dikerjakan manual oleh teknisi kami. Pilih layanan, atur jumlahnya,
-              lalu lanjut ke checkout. Free antar-jemput area Jakarta Selatan, Tangerang Selatan,
-              dan Tangerang.
+              Per-item pricing, hand-cleaned by our technicians. Choose a service, adjust quantities,
+              then proceed to checkout. Free pickup & delivery for Jakarta Selatan, Tangerang Selatan,
+              and Tangerang.
             </p>
           </div>
         </section>
 
         <section className="pb-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
             <ServiceCatalog />
           </div>
         </section>

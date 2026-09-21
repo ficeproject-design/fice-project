@@ -26,9 +26,25 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md transition-all relative">
+    <>
+      {/* Announcement Banner — NOT sticky, scroll away like Sparkles */}
+      <div className="bg-[#f06a60] text-white text-xs font-bold py-2 px-4 text-center tracking-wide flex items-center justify-center gap-2">
+        <span className="bg-[#000000] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+          FREE PICKUP
+        </span>
+        <span>100% Free Pickup & Delivery — Jaksel, Tangsel & Tangerang</span>
+        <span className="text-white/60 hidden sm:inline">&bull;</span>
+        <Link
+          href="/harga"
+          className="underline hover:text-[#000000] transition-colors font-extrabold text-white hidden sm:inline-flex items-center gap-1"
+        >
+          Book before 1 PM for same-day pickup
+          <ArrowRight className="w-3.5 h-3.5 inline" />
+        </Link>
+      </div>
 
-      <nav className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-18 sm:h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md transition-all relative">
+        <nav className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-18 sm:h-20 flex items-center justify-between">
         {/* Left Side: Logo + Nav Links directly grouped together on the exact optical axis */}
         <div className="flex items-center gap-7 lg:gap-10">
           {/* Logo */}
@@ -52,7 +68,7 @@ export default function Navbar() {
                 type="button"
                 className="flex items-center gap-1.5 hover:text-[#f06a60] transition-colors cursor-pointer font-body font-bold text-[15.5px] lg:text-[16.5px] tracking-tight leading-none"
               >
-                <span>Layanan</span>
+                <span>Services</span>
                 <ChevronDown
                   className={`w-3.5 h-3.5 text-[#000000] opacity-60 transition-transform duration-200 ${
                     servicesOpen ? 'rotate-180 text-[#f06a60] opacity-100' : ''
@@ -65,32 +81,32 @@ export default function Navbar() {
               href="/tentang"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
-              Tentang
+              About
             </Link>
             <Link
               href="/harga"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
-              Harga
+              Pricing
             </Link>
             <Link
               href="/testimoni"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
-              Testimoni
+              Testimonials
             </Link>
             <Link
               href="/#cara-kerja"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
-              Cara Kerja
+              How It Works
             </Link>
             <Link
               href="/track"
               className="hover:text-[#f06a60] transition-colors flex items-center gap-1.5 leading-none"
             >
               <Search className="w-3.5 h-3.5 opacity-70" />
-              <span>Lacak Resi</span>
+              <span>Track Order</span>
             </Link>
           </div>
         </div>
@@ -98,8 +114,8 @@ export default function Navbar() {
         {/* Right CTA Button: Hero Button Font Style (font-heading font-bold, 19px, tracking-normal, spacious padding) */}
         <div className="hidden md:flex items-center">
           <Link
-            href="/order"
-            className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white text-base sm:text-lg lg:text-[19px] font-heading font-bold tracking-normal uppercase px-5 sm:px-6 py-2 sm:py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95 overflow-hidden"
+            href="/harga"
+            className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white text-base sm:text-lg lg:text-[19px] font-heading font-bold tracking-normal uppercase px-5 sm:px-6 py-2 sm:py-2.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95 overflow-hidden"
           >
             <span className="transition-colors duration-300">BOOK CLEANING</span>
             <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
@@ -111,8 +127,8 @@ export default function Navbar() {
         {/* Mobile menu toggle */}
         <div className="flex md:hidden items-center gap-2">
           <Link
-            href="/order"
-            className="bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold tracking-normal uppercase px-4 sm:px-5 py-2 sm:py-2.5 rounded-full"
+            href="/harga"
+            className="bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold tracking-normal uppercase px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl"
           >
             Book
           </Link>
@@ -196,7 +212,7 @@ export default function Navbar() {
                   <Link
                     href="/harga"
                     onClick={() => setServicesOpen(false)}
-                    className="inline-flex items-center gap-2 text-sm sm:text-base font-heading font-bold tracking-normal uppercase px-6 py-3 rounded-full bg-[#f2ece5] hover:bg-[#000000] text-[#000000] hover:text-white transition-all group"
+                    className="inline-flex items-center gap-2 text-sm sm:text-base font-heading font-bold tracking-normal uppercase px-6 py-3 rounded-2xl bg-[#f2ece5] hover:bg-[#000000] text-[#000000] hover:text-white transition-all group"
                   >
                     EXPLORE ALL SERVICES
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
@@ -277,28 +293,28 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >
-              Beranda
+              Home
             </Link>
             <Link
               href="/harga"
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >
-              Layanan & Harga
+              Services & Pricing
             </Link>
             <Link
               href="/testimoni"
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >
-              Testimoni
+              Testimonials
             </Link>
             <Link
               href="/#cara-kerja"
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >
-              Cara Kerja Antar-Jemput
+              How It Works
             </Link>
             <Link
               href="/track"
@@ -306,15 +322,15 @@ export default function Navbar() {
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5] flex items-center gap-2"
             >
               <Search className="w-4 h-4 text-[#f06a60]" />
-              Lacak Resi Pesanan
+              Track Order
             </Link>
           </div>
 
           <div className="pt-2">
             <Link
-              href="/order"
+              href="/harga"
               onClick={() => setMobileMenuOpen(false)}
-              className="group w-full flex items-center justify-center bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white font-heading font-bold py-4 rounded-full shadow-md text-base sm:text-lg lg:text-[19px] uppercase tracking-normal transition-all duration-300 active:scale-95 overflow-hidden"
+              className="group w-full flex items-center justify-center bg-[#f06a60] hover:bg-[#000000] text-[#000000] hover:text-white font-heading font-bold py-4 rounded-2xl shadow-md text-base sm:text-lg lg:text-[19px] uppercase tracking-normal transition-all duration-300 active:scale-95 overflow-hidden"
             >
               <span className="transition-colors duration-300">BOOK CLEANING</span>
               <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
@@ -325,5 +341,6 @@ export default function Navbar() {
         </div>
       )}
     </header>
+    </>
   );
 }

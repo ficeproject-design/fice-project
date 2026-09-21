@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Plus,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Service, ServiceCategory } from '@/lib/types';
 import { formatRupiah } from '@/lib/invoice';
+import { readCart, writeCart } from '@/lib/cart';
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   shoes: 'Sepatu',
@@ -51,21 +53,10 @@ export default function ServiceCatalog() {
 
   useEffect(() => {
     (async () => {
-      try {
-        const raw = sessionStorage.getItem('fice_cart');
-        if (raw) {
-          sessionStorage.removeItem('fice_cart');
-          const saved = JSON.parse(raw) as Record<string, number>;
-          const next: Cart = {};
-          for (const [id, q] of Object.entries(saved)) {
-            const qty = Number(q);
-            if (qty > 0) next[id] = Math.min(50, Math.floor(qty));
-          }
-          if (Object.keys(next).length > 0) setCart(next);
-        }
-      } catch {
-        // cart rusak, mulai dari kosong
-      }
+      // Restore persisted cart (localStorage, survives refresh). Never deletes
+      // here — cart clears only after a successful order submit.
+      const saved = readCart();
+      if (Object.keys(saved).length > 0) setCart(saved);
       await loadServices();
     })();
   }, []);
@@ -84,7 +75,7 @@ export default function ServiceCatalog() {
   const subtotal = services.reduce((s, srv) => s + (cart[srv.id] || 0) * srv.price, 0);
 
   const handleCheckout = () => {
-    sessionStorage.setItem('fice_cart', JSON.stringify(cart));
+    writeCart(cart);
     router.push('/order');
   };
 
@@ -102,7 +93,7 @@ export default function ServiceCatalog() {
             type="button"
             onClick={() => setCategory(c)}
             aria-pressed={category === c}
-            className={`px-5 sm:px-7 py-3 rounded-full text-sm font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
+            className={`px-5 sm:px-7 py-3 rounded-xl text-sm font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
               category === c
                 ? 'bg-[#0d1526] text-white shadow-sm'
                 : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
@@ -125,7 +116,7 @@ export default function ServiceCatalog() {
           <button
             type="button"
             onClick={loadServices}
-            className="inline-flex items-center gap-2 bg-[#0d1526] hover:bg-[#f06a60] text-white text-xs font-bold px-4 py-3 rounded-full transition-colors"
+            className="inline-flex items-center gap-2 bg-[#0d1526] hover:bg-[#f06a60] text-white text-xs font-bold px-4 py-3 rounded-xl transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Coba Lagi
@@ -165,6 +156,13 @@ export default function ServiceCatalog() {
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
                     {srv.description}
                   </p>
+                  <Link
+                    href={`/harga/${srv.id}`}
+                    className="text-xs text-[#f06a60] font-heading font-bold hover:underline inline-flex items-center gap-1 pt-0.5"
+                  >
+                    Lihat Detail
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
                   <p className="text-[11px] text-slate-500 inline-flex items-center gap-1 pt-1">
                     <Clock className="w-3.5 h-3.5 text-[#f06a60]" />
                     Perkiraan selesai {srv.estimatedDays}
@@ -185,7 +183,7 @@ export default function ServiceCatalog() {
                     <button
                       type="button"
                       onClick={() => setQty(srv.id, 1)}
-                      className="inline-flex items-center gap-1.5 bg-[#0d1526] hover:bg-[#f06a60] text-white font-bold text-xs px-4 min-h-[44px] rounded-full transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 bg-[#0d1526] hover:bg-[#f06a60] text-white font-bold text-xs px-4 min-h-[44px] rounded-xl transition-colors cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                       Tambah
@@ -230,7 +228,7 @@ export default function ServiceCatalog() {
       {/* Bilah keranjang */}
       {itemsCount > 0 && (
         <div className="fixed bottom-0 inset-x-0 z-40 border-t border-black/10 bg-[#fdf8f1]/98 backdrop-blur-xs">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-3 flex items-center gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-10 h-10 rounded-full bg-[#0d1526] text-white flex items-center justify-center shrink-0">
                 <ShoppingBag className="w-4.5 h-4.5 text-[#f06a60]" />
@@ -255,7 +253,7 @@ export default function ServiceCatalog() {
             <button
               type="button"
               onClick={handleCheckout}
-              className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] hover:text-white text-[#000000] font-heading font-bold text-sm uppercase tracking-normal px-5 sm:px-7 min-h-[44px] rounded-full shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#000000] hover:text-white text-[#000000] font-heading font-bold text-sm uppercase tracking-normal px-5 sm:px-7 min-h-[44px] rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               Lanjut ke Checkout
               <ArrowRight className="w-4 h-4" />

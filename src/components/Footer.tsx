@@ -1,139 +1,202 @@
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, MapPin, Clock, MessageSquare, ShieldCheck, ArrowUpRight, Heart } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+
+const PAGE_LINKS = [
+  { label: 'Harga', href: '/harga' },
+  { label: 'Tentang', href: '/tentang' },
+  { label: 'Testimoni', href: '/testimoni' },
+  { label: 'Lacak Pesanan', href: '/track' },
+  { label: 'Book Pickup', href: '/order' },
+];
+
+const SERVICE_LINKS = [
+  { label: 'Deep Clean Shoes', href: '/harga#shoes' },
+  { label: 'Suede & Nubuck', href: '/harga#shoes' },
+  { label: 'Leather / Kulit', href: '/harga#shoes' },
+  { label: 'Kids Shoes', href: '/harga#shoes' },
+  { label: 'Womens Care', href: '/harga#shoes' },
+  { label: 'Bag Deep Clean', href: '/harga#bags' },
+  { label: 'Hat & Accessories', href: '/harga#accessories' },
+];
+
+const BOTTOM_LINKS = [
+  { label: 'Admin', href: '/admin' },
+  { label: 'WhatsApp', href: 'https://wa.me/628161885553', external: true },
+  { label: 'Instagram', href: 'https://instagram.com/ficeshoescare', external: true },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#000000] text-[#fdf8f1] border-t border-black/10 mt-auto">
-      <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-16 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-          {/* Brand Col */}
-          <div className="md:col-span-4 space-y-4">
-            <div className="space-y-2">
-              <img
-                src="/images/fice-logo-white.png"
-                alt="Fice Shoes Care"
-                className="h-12 sm:h-14 w-auto object-contain"
-              />
-              <span className="text-xs uppercase font-heading font-bold tracking-widest text-neutral-400 block">
-                Premium Shoes &amp; Bag Spa
-              </span>
+    <>
+      {/* CTA Section — above footer */}
+      <section className="px-4 sm:px-6 lg:px-8 xl:px-10 pb-10">
+        <div className="bg-[#f06a60] rounded-3xl px-8 py-20 sm:px-16 sm:py-28 text-center">
+          <h2 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white tracking-tight leading-[0.95] max-w-3xl mx-auto">
+            Ready for Your Next Pair?
+          </h2>
+          <p className="text-sm sm:text-base text-white/80 mt-5 max-w-lg mx-auto leading-relaxed">
+            Lihat harga transparan dan jadwalkan penjemputan gratis ke alamat Anda.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+            <Link
+              href="/harga"
+              className="inline-flex items-center justify-center bg-white hover:bg-[#0d1526] text-[#0d1526] hover:text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-8 py-4 rounded-2xl transition-all duration-300 active:scale-95"
+            >
+              BOOK CLEANING
+            </Link>
+            <Link
+              href="/harga"
+              className="inline-flex items-center justify-center bg-white/20 hover:bg-white text-white hover:text-[#0d1526] font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-8 py-4 rounded-2xl transition-all duration-300 active:scale-95"
+            >
+              VIEW PRICING
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-[#fdf8f1] mt-auto">
+      <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-12 pb-6">
+        {/* Rounded container with 3 columns + giant brand name */}
+        <div className="bg-[#f2ece5] rounded-3xl p-8 sm:p-10 lg:p-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+            {/* Left: Contact */}
+            <div className="space-y-6">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
+                  Address
+                </p>
+                <p className="font-semibold text-base sm:text-lg text-[#0d1526] leading-snug">
+                  Fice Shoes Care
+                </p>
+                <p className="text-sm text-neutral-600 leading-relaxed">
+                  Pondok Aren, Tangerang Selatan
+                </p>
+                <p className="text-sm text-neutral-600">
+                  Banten, Indonesia
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
+                  Phone
+                </p>
+                <a
+                  href="https://wa.me/628161885553"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-base sm:text-lg text-[#0d1526] hover:text-[#f06a60] transition-colors"
+                >
+                  0816-1885-553
+                </a>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
+                  Email
+                </p>
+                <a
+                  href="mailto:hello@ficeshoescare.id"
+                  className="font-semibold text-base sm:text-lg text-[#0d1526] hover:text-[#f06a60] transition-colors"
+                >
+                  hello@ficeshoescare.id
+                </a>
+              </div>
             </div>
 
-            <p className="text-sm sm:text-base text-neutral-400 leading-relaxed max-w-sm">
-              Layanan perawatan sepatu, tas, dan aksesoris profesional dengan komitmen{' '}
-              <strong className="text-white">100% Free Antar-Jemput</strong> langsung ke depan pintu Anda. Dilengkapi dokumentasi foto QC Before &amp; After.
-            </p>
-
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-[#f06a60] font-heading font-bold bg-[#f06a60]/10 border border-[#f06a60]/30 px-4 py-2 rounded-full w-fit">
-              <ShieldCheck className="w-4 h-4 text-[#f06a60]" />
-              Transparansi Foto QC Before &amp; After
-            </div>
-          </div>
-
-          {/* Area Coverage Col */}
-          <div className="md:col-span-3 space-y-3">
-            <h4 className="font-heading text-white font-black text-base uppercase tracking-wider flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#f06a60]" />
-              Coverage Area
-            </h4>
-            <ul className="text-xs sm:text-sm text-neutral-400 space-y-3">
-              <li className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-neutral-200">
-                  <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-                  Kota Tangerang Selatan
-                </div>
-                <p className="text-[11px] sm:text-xs text-neutral-400 pl-4 leading-relaxed">
-                  Serpong, Serpong Utara, Ciputat, Ciputat Timur, Pamulang, Pondok Aren, Setu
+            {/* Right: Pages + Services side by side */}
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-5">
+                  Pages
                 </p>
-              </li>
-              <li className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-neutral-200">
-                  <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-                  Kota Tangerang
-                </div>
-                <p className="text-[11px] sm:text-xs text-neutral-400 pl-4 leading-relaxed">
-                  Ciledug, Cipondoh, Karang Tengah, Karawaci, Gading Serpong, Larangan
+                <ul className="space-y-3">
+                  {PAGE_LINKS.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-sm sm:text-base text-black font-medium hover:text-[#f06a60] transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-5">
+                  Services
                 </p>
-              </li>
-              <li className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-neutral-200">
-                  <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-                  Jakarta Selatan
-                </div>
-                <p className="text-[11px] sm:text-xs text-neutral-400 pl-4 leading-relaxed">
-                  Cilandak, Jagakarsa, Kebayoran Baru, Kebayoran Lama, Mampang Prapatan, Pancoran, Pasar Minggu, Pesanggrahan, Tebet, Setiabudi
-                </p>
-              </li>
-            </ul>
-            <p className="text-xs text-neutral-500 pt-1">
-              * Radius &le; 20 km bebas jumlah item. &gt; 20 km min. 3 item. Gratis ongkir!
-            </p>
-          </div>
-
-          {/* Schedule & Cut-off Col */}
-          <div className="md:col-span-3 space-y-3">
-            <h4 className="font-heading text-white font-black text-base uppercase tracking-wider flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#f06a60]" />
-              Jadwal &amp; Cut-Off
-            </h4>
-            <div className="text-sm text-neutral-400 space-y-2.5">
-              <p>
-                <strong className="text-white">Operasional:</strong> Setiap Hari 09.00 - 18.00 WIB
-              </p>
-              <div className="bg-neutral-900 p-3.5 rounded-2xl border border-neutral-800 text-xs sm:text-sm">
-                <p className="text-[#f06a60] font-heading font-black mb-1">Ketentuan Cut-Off 13.00:</p>
-                <p className="text-neutral-300">
-                  Order sebelum jam 13.00 WIB bisa dijemput hari yang sama. Di atas jam 13.00 dijemput esok harinya.
-                </p>
+                <ul className="space-y-3">
+                  {SERVICE_LINKS.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-sm sm:text-base text-black font-medium hover:text-[#f06a60] transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="md:col-span-2 space-y-3">
-            <h4 className="font-heading text-white font-black text-base uppercase tracking-wider">
-              Menu
-            </h4>
-            <ul className="text-sm text-neutral-400 space-y-2.5 font-medium">
-              <li>
-                <Link href="/order" className="hover:text-white transition-colors flex items-center gap-1.5">
-                  Pesan Jemput
-                  <ArrowUpRight className="w-3.5 h-3.5 text-[#f06a60]" />
-                </Link>
-              </li>
-              <li>
-                <Link href="/track" className="hover:text-white transition-colors">
-                  Lacak Resi
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-white transition-colors">
-                  Admin Portal
-                </Link>
-              </li>
-              <li>
+          {/* Giant brand name inside the card */}
+          <div className="mt-10 pt-8 border-t border-black/[0.06] overflow-hidden">
+              <h2
+                className="text-[11vw] sm:text-[10vw] md:text-[9.5vw] leading-[0.85] text-[#000000] tracking-tight select-none text-center whitespace-nowrap"
+                style={{ fontFamily: "'Bugaki', sans-serif", fontStyle: 'normal' }}
+              >
+                Fice Shoescare<span className="text-[#f06a60]">.</span>
+              </h2>
+          </div>
+
+          {/* Bottom bar inside the card */}
+          <div className="mt-8 pt-6 border-t border-black/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-neutral-500 gap-4">
+            <div className="flex items-center gap-4 sm:gap-6">
+              {BOTTOM_LINKS.map((link) => (
                 <a
-                  href="https://wa.me/6281298765432"
+                  key={link.label}
+                  href={link.href}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                  className="hover:text-black transition-colors font-medium"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            <div className="flex items-center gap-4">
+              <span>&copy; {new Date().getFullYear()} Fice Shoes Care</span>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://wa.me/628161885553"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#f06a60] hover:underline font-bold inline-flex items-center gap-1.5 pt-1"
+                  className="hover:text-[#f06a60] transition-colors"
+                  aria-label="WhatsApp"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Chat WhatsApp
                 </a>
-              </li>
-            </ul>
+                <a
+                  href="https://instagram.com/ficeshoescare"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#f06a60] transition-colors"
+                  aria-label="Instagram"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="border-t border-neutral-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 gap-4">
-          <p>© {new Date().getFullYear()} Fice Shoes Care. All rights reserved.</p>
-          <p className="flex items-center gap-1 text-neutral-400">
-            Dibuat untuk perawatan sepatu & tas terbaik di Jabodetabek.
-          </p>
         </div>
       </div>
     </footer>
+    </>
   );
 }

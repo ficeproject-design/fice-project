@@ -41,6 +41,21 @@ const SWAP_LOCATIONS = [
   'BSD CITY',
 ];
 
+const SERVICE_IMAGES: Record<string, string> = {
+  'srv-shoes-deepclean':
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop',
+  'srv-shoes-leather':
+    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800&auto=format&fit=crop',
+  'srv-bag-medium':
+    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop',
+  'srv-shoes-suede':
+    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=800&auto=format&fit=crop',
+  'srv-acc-deepclean':
+    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop',
+  fallback:
+    'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop',
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [trackQuery, setTrackQuery] = useState('');
@@ -55,8 +70,10 @@ export default function HomePage() {
         const res = await fetch('/api/services');
         const data = await res.json();
         if (data.success) {
-          const popular = (data.data as Service[]).filter((s) => s.popular);
-          setFeaturedServices(popular.length > 0 ? popular : data.data.slice(0, 4));
+          const all = data.data as Service[];
+          const popular = all.filter((s) => s.popular);
+          const rest = all.filter((s) => !s.popular);
+          setFeaturedServices([...popular, ...rest].slice(0, 4));
         }
       } catch {
         // gagal load, section highlight tetap aman tampil kosong
@@ -84,78 +101,14 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* HERO SECTION - EXACT SPARKLES TWO-CARD SPLIT LAYOUT */}
-        <section className="pt-2 sm:pt-4 pb-8 sm:pb-12">
-          <div className="max-w-[1760px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 space-y-3 sm:space-y-4">
-
-            {/* Announcement Banner — hanya di hero, tidak sticky */}
-            <div className="bg-[#f06a60] text-white text-xs font-bold py-2.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 rounded-2xl shadow-xs">
-              <span className="bg-[#000000] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
-                FREE PICKUP
-              </span>
-              <span>100% Free Antar-Jemput Jaksel, Tangsel & Tangerang</span>
-              <span className="text-white/60 hidden sm:inline">•</span>
-              <Link
-                href="/order"
-                className="underline hover:text-[#000000] transition-colors font-extrabold text-white hidden sm:inline-flex items-center gap-1"
-              >
-                Pesan sebelum jam 13:00 untuk jemput hari ini
-                <ArrowRight className="w-3.5 h-3.5 inline" />
-              </Link>
-            </div>
+        <section className="pt-2 sm:pt-3 pb-6 sm:pb-10">
+          <div className="max-w-[1760px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 space-y-2 sm:space-y-3">
 
             {/* The 2 Large Split Cards - Equal Height Dominating Screen */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-stretch lg:h-[82vh] lg:min-h-[660px] lg:max-h-[860px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch lg:h-[68vh] lg:min-h-[520px] lg:max-h-[720px] lg:gap-3">
               
-              {/* LEFT CARD: Deep Dark Card with Giant Bold Headline */}
-              <div className="bg-[#0d1526] text-white rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] p-8 sm:p-12 lg:p-14 xl:p-16 flex flex-col justify-between shadow-xs h-full">
-                {/* Top Rating Badges */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-colors">
-                    <span className="w-5 h-5 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-black text-[10px]">
-                      ★
-                    </span>
-                    <span>100% FREE JEMPUT</span>
-                  </div>
-                </div>
-
-                {/* Giant Headline All-Caps matching Sparkles reference */}
-                <div className="my-auto py-6 sm:py-8 space-y-0">
-                  <h1 className="font-heading font-bold text-5xl sm:text-7xl lg:text-[76px] xl:text-[96px] 2xl:text-[106px] leading-[0.88] sm:leading-[0.86] tracking-tight uppercase">
-                    <span className="block">CLEANING</span>
-                    <span className="block">FOR BUSY</span>
-                    <span className="block">PEOPLE IN</span>
-                    <span className="block text-[#f06a60] transition-all duration-300">
-                      {SWAP_LOCATIONS[locationIndex]}
-                    </span>
-                  </h1>
-                </div>
-
-                {/* Bottom Action Buttons inside the dark card */}
-                <div className="flex flex-wrap items-center gap-3 pt-4">
-                  <Link
-                    href="/order"
-                    className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-base sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-6 sm:px-7 py-3.5 sm:py-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300 ease-out active:scale-95 overflow-hidden"
-                  >
-                    <span className="transition-colors duration-300">BOOK YOUR CLEANING</span>
-                    <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
-                      <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="#layanan"
-                    className="group relative inline-flex items-center justify-center bg-white/10 hover:bg-white text-white hover:text-[#000000] font-heading font-bold text-base sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-6 sm:px-7 py-3.5 sm:py-4 rounded-full border border-white/15 hover:border-white transition-all duration-300 ease-out overflow-hidden"
-                  >
-                    <span className="transition-colors duration-300">SEE PRICING</span>
-                    <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
-                      <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                    </span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* RIGHT CARD: Image Showcase Card */}
-              <div className="rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] overflow-hidden relative shadow-xs h-[420px] sm:h-[500px] lg:h-full bg-[#f2ece5]">
+              {/* IMAGE CARD — mobile: first (on top), desktop: right side */}
+              <div className="order-1 lg:order-2 rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] overflow-hidden relative shadow-xs h-[320px] sm:h-[400px] lg:h-full bg-[#f2ece5]">
                 <img
                   src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1400&auto=format&fit=crop&q=85"
                   alt="Shoes Care Detailing"
@@ -169,13 +122,61 @@ export default function HomePage() {
                     <span className="w-2.5 h-2.5 rounded-full bg-[#f06a60] animate-pulse"></span>
                     <span>Fice Shoes Care Workshop</span>
                   </div>
-                  <span className="text-[#f06a60] font-extrabold">Jaksel • Tangsel • Tangerang</span>
+                  <span className="text-[#f06a60] font-extrabold hidden sm:inline">Jaksel • Tangsel • Tangerang</span>
+                </div>
+              </div>
+
+              {/* DARK CARD — mobile: second (overlaps image), desktop: left side */}
+              <div className="order-2 lg:order-1 bg-[#0d1526] text-white rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between shadow-xs h-full -mt-16 sm:-mt-20 lg:mt-0 relative z-10">
+                {/* Top Rating Badges */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold tracking-wide transition-colors">
+                    <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-black text-[9px] sm:text-[10px]">
+                      ★
+                    </span>
+                    <span>100% FREE PICKUP</span>
+                  </div>
+                </div>
+
+                {/* Giant Headline All-Caps matching Sparkles reference */}
+                <div className="my-auto py-3 sm:py-6 space-y-0">
+                  <h1 className="font-heading font-black text-[32px] sm:text-6xl lg:text-[64px] xl:text-[80px] 2xl:text-[92px] leading-[0.88] sm:leading-[0.86] tracking-tight uppercase">
+                    <span className="block">CLEANING</span>
+                    <span className="block">FOR BUSY</span>
+                    <span className="block">PEOPLE IN</span>
+                    <span className="block text-[#f06a60] transition-all duration-300">
+                      {SWAP_LOCATIONS[locationIndex]}
+                    </span>
+                  </h1>
+                </div>
+
+                {/* Bottom Action Buttons inside the dark card */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-3 sm:pt-4">
+                  <Link
+                    href="/order"
+                    className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 ease-out active:scale-95 overflow-hidden"
+                  >
+                    <span className="transition-colors duration-300">BOOK YOUR CLEANING</span>
+                    <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
+                      <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="#layanan"
+                    className="group relative inline-flex items-center justify-center bg-white/10 hover:bg-white text-white hover:text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl border border-white/15 hover:border-white transition-all duration-300 ease-out overflow-hidden"
+                  >
+                    <span className="transition-colors duration-300">SEE PRICING</span>
+                    <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
+                      <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+                    </span>
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* SPARKLES SUPPORT TILES GRID (4 HORIZONTAL CARDS) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 pt-1 sm:pt-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 pt-4 sm:pt-6">
               {/* Tile 1: Phone / WhatsApp */}
               <a
                 href="https://wa.me/628161885553"
@@ -187,7 +188,7 @@ export default function HomePage() {
                   <Phone className="w-7 h-7 text-[#0d1526]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-heading font-bold text-2xl sm:text-3xl text-[#0d1526] tracking-tight leading-none">
+                  <h4 className="font-heading font-bold text-base sm:text-lg text-[#0d1526] tracking-tight leading-none">
                     Phone
                   </h4>
                   <p className="text-sm sm:text-base text-neutral-600 truncate mt-1.5 font-body">
@@ -205,7 +206,7 @@ export default function HomePage() {
                   <Mail className="w-7 h-7 text-[#0d1526]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-heading font-bold text-2xl sm:text-3xl text-[#0d1526] tracking-tight leading-none">
+                  <h4 className="font-heading font-bold text-base sm:text-lg text-[#0d1526] tracking-tight leading-none">
                     Email
                   </h4>
                   <p className="text-sm sm:text-base text-neutral-600 truncate mt-1.5 font-body">
@@ -224,7 +225,7 @@ export default function HomePage() {
                   <Truck className="w-7 h-7 text-[#f06a60]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-heading font-bold text-2xl sm:text-3xl text-[#0d1526] tracking-tight leading-none">
+                  <h4 className="font-heading font-bold text-base sm:text-lg text-[#0d1526] tracking-tight leading-none">
                     Free Pickup &amp; Delivery
                   </h4>
                   <p className="text-sm sm:text-base text-neutral-600 truncate mt-1.5 font-body flex items-center gap-1.5">
@@ -240,7 +241,7 @@ export default function HomePage() {
                   <Clock className="w-7 h-7 text-[#f06a60]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-heading font-bold text-2xl sm:text-3xl text-[#0d1526] tracking-tight leading-none">
+                  <h4 className="font-heading font-bold text-base sm:text-lg text-[#0d1526] tracking-tight leading-none">
                     Jam Operasional
                   </h4>
                   <p className="text-sm sm:text-base text-neutral-600 truncate mt-1.5 font-body">
@@ -269,15 +270,15 @@ export default function HomePage() {
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              100% FREE ANTAR-JEMPUT
+              100% FREE PICKUP &amp; DELIVERY
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              DOKUMENTASI FOTO QC BEFORE & AFTER
+              PHOTO QC DOCUMENTATION — BEFORE &amp; AFTER
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              BAYAR SETELAH TIBA DI WORKSHOP
+              PAY AFTER ARRIVAL AT WORKSHOP
             </span>
             {/* Loop duplicate */}
             <span className="flex items-center gap-2">
@@ -294,7 +295,7 @@ export default function HomePage() {
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              100% FREE ANTAR-JEMPUT
+              100% FREE PICKUP &amp; DELIVERY
             </span>
           </div>
         </div>
@@ -305,74 +306,69 @@ export default function HomePage() {
             <div className="space-y-3 mb-10 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
                 <Sparkles className="w-4 h-4 text-[#f06a60]" />
-                What We Clean • Spesialis Perawatan
+                What We Clean • Premium Care Specialist
               </div>
-              <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                Layanan & Harga Transparan
+              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                What We Clean
               </h2>
               <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
-                Setiap sepatu dan tas dikerjakan manual oleh teknisi berpengalaman dengan formula premium tanpa detergen keras.
+                Setiap sepatu dan tas dibersihkan secara manual oleh teknisi berpengalaman menggunakan formula premium — tanpa deterjen keras.
               </p>
             </div>
 
             {featuredServices.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-                {featuredServices.map((srv) => (
-                  <Link
-                    key={srv.id}
-                    href="/harga"
-                    className="bg-white rounded-[28px] p-5 sm:p-6 border border-black/[0.08] hover:border-[#f06a60]/60 transition-colors flex flex-col justify-between gap-4"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-slate-500">
-                          {srv.category === 'shoes'
-                            ? 'Sepatu'
-                            : srv.category === 'bag'
-                              ? 'Tas'
-                              : 'Topi & Aksesori'}
-                        </span>
-                        {srv.popular && (
-                          <span className="bg-[#f06a60] text-white text-[10px] font-heading font-black uppercase px-2.5 py-1 rounded-full">
-                            Populer
+              <div className="overflow-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10">
+                <div className="animate-carousel flex gap-4 sm:gap-5 w-max">
+                  {[...featuredServices, ...featuredServices].map((srv, i) => (
+                    <Link
+                      key={`${srv.id}-${i}`}
+                      href={`/harga/${srv.id}`}
+                      className="group relative flex-none w-[260px] sm:w-[300px] lg:w-[340px] h-[380px] sm:h-[420px] rounded-[28px] overflow-hidden"
+                    >
+                      <img
+                        src={SERVICE_IMAGES[srv.id] || SERVICE_IMAGES.fallback}
+                        alt={srv.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 p-5 sm:p-6 flex flex-col justify-end">
+                        <div className="space-y-2">
+                          <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-white/70">
+                            {srv.category === 'shoes'
+                              ? 'Sepatu'
+                              : srv.category === 'bag'
+                                ? 'Tas'
+                                : 'Topi & Aksesori'}
                           </span>
-                        )}
+                          <h3 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-white uppercase leading-[0.95] tracking-tight">
+                            {srv.name}
+                          </h3>
+                          <div className="flex items-center justify-between gap-3 pt-2">
+                            <span className="font-heading font-black text-lg text-[#f06a60]">
+                              {formatRupiah(srv.price)}
+                            </span>
+                            <span className="text-[11px] text-white/60 inline-flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              {srv.estimatedDays}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="font-heading font-bold text-lg sm:text-xl text-[#0d1526] leading-tight">
-                        {srv.name}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed line-clamp-2">
-                        {srv.description}
-                      </p>
-                    </div>
-                    <div className="pt-3.5 border-t border-black/[0.06] flex items-center justify-between gap-3">
-                      <div>
-                        <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">
-                          Tarif / item
-                        </span>
-                        <span className="font-heading font-black text-xl text-[#f06a60]">
-                          {formatRupiah(srv.price)}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {srv.estimatedDays}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
 
             <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
               <p className="text-xs text-neutral-500">
-                Filter kategori, jumlah item, dan checkout lengkap tersedia di halaman harga.
+                Filter berdasarkan kategori, atur jumlah, dan checkout di halaman harga.
               </p>
               <Link
                 href="/harga"
-                className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-[#000000] hover:text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-7 py-3.5 rounded-full shadow-sm transition-all duration-300 active:scale-95"
+                className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-[#000000] hover:text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm transition-all duration-300 active:scale-95"
               >
-                Lihat Semua Layanan &amp; Harga
+                View All Services &amp; Pricing
                 <ArrowRight className="w-4 h-4 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -384,13 +380,13 @@ export default function HomePage() {
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="text-center max-w-3xl mx-auto space-y-3 mb-16">
               <span className="text-xs sm:text-sm font-heading font-bold uppercase tracking-wider bg-[#f2ece5] text-[#f06a60] border border-[#f06a60]/20 px-4 py-1.5 rounded-full">
-                Sangat Praktis &amp; Bebas Repot
+                Super Easy &amp; Hassle-Free
               </span>
-              <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                Bagaimana Cara Kerjanya?
+              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                How It Works
               </h2>
               <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed">
-                Hanya butuh 2 menit untuk pesan, kurir kami yang menjemput dan mengantar kembali ke pintu rumah Anda.
+                Cukup 2 menit untuk booking — kurir kami jemput dan antar langsung ke rumah Anda.
               </p>
             </div>
 
@@ -400,9 +396,9 @@ export default function HomePage() {
                   01
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">Booking Online</h3>
+                  <h3 className="font-heading font-black text-xl sm:text-2xl text-[#000000]">Booking Online</h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    Pilih layanan yang diinginkan, tentukan titik lokasi pada peta interaktif, dan pilih slot jadwal penjemputan.
+                    Pilih layanan Anda, tandai lokasi di peta interaktif, dan pilih jadwal penjemputan yang diinginkan.
                   </p>
                 </div>
               </div>
@@ -412,9 +408,9 @@ export default function HomePage() {
                   02
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">Kurir Jemput Barang</h3>
+                  <h3 className="font-heading font-black text-xl sm:text-2xl text-[#000000]">Courier Picks Up</h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    Kurir kami akan menghubungi Anda via WhatsApp dan mengambil sepatu/tas di alamat Anda tanpa biaya ongkir.
+                    Kurir kami menghubungi Anda via WhatsApp dan menjemput sepatu/tas Anda — sepenuhnya gratis.
                   </p>
                 </div>
               </div>
@@ -424,9 +420,9 @@ export default function HomePage() {
                   03
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">QC Foto &amp; Treatment</h3>
+                  <h3 className="font-heading font-black text-xl sm:text-2xl text-[#000000]">QC Photo &amp; Treatment</h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    Tiba di workshop, tim kami mengambil foto fisik kondisi awal (*Before*) dan mencuci sesuai standar material.
+                    Di workshop kami, kami foto kondisi awal (Before) dan membersihkan sesuai standar material.
                   </p>
                 </div>
               </div>
@@ -436,9 +432,9 @@ export default function HomePage() {
                   04
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#000000]">Antar Kembali</h3>
+                  <h3 className="font-heading font-black text-xl sm:text-2xl text-[#000000]">Delivered Back</h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    Sepatu selesai dicuci, foto QC After diunggah, lalu diantar kembali ke alamat Anda.
+                    Sepatu dibersihkan, foto QC After diunggah, lalu dikembalikan ke alamat Anda.
                   </p>
                 </div>
               </div>
@@ -454,36 +450,36 @@ export default function HomePage() {
                 <div className="lg:col-span-5 space-y-6">
                   <div className="inline-flex items-center gap-2 bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold uppercase px-4 py-1.5 rounded-full">
                     <Camera className="w-4 h-4" />
-                    Garansi Transparansi 100%
+                    100% Transparency Guarantee
                   </div>
-                  <h2 className="font-heading font-bold text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight text-white leading-tight">
-                    Setiap Sepatu Difoto Kondisinya (QC Before &amp; After)
+                  <h2 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight text-white leading-tight">
+                    Every Shoe Gets Photo-QC'd (Before &amp; After)
                   </h2>
                   <p className="text-sm sm:text-base text-neutral-300 leading-relaxed max-w-xl">
-                    Tidak perlu cemas! Saat sepatu tiba di workshop Fice Shoes Care, kurir &amp; teknisi kami mengambil foto kondisi awal (sol, upper, tali) dan mencatat jika ada lecet bawaan. Foto dapat Anda cek langsung di halaman resi tracking Anda.
+                    Tenang! Saat sepatu Anda tiba di workshop kami, kurir dan teknisi kami memotret kondisi awal (sol, upper, tali) dan mencatat goresan yang sudah ada sebelumnya. Anda bisa melihat fotonya langsung di halaman tracking pesanan Anda.
                   </p>
 
                   <div className="space-y-3 text-xs sm:text-sm text-neutral-300 pt-2">
                     <div className="flex items-center gap-3">
                       <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Menghindari komplain cacat bawaan sebelum dicuci.</span>
+                      <span>Mencegah sengketa terhadap kerusakan yang sudah ada sebelumnya.</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Pelanggan bisa melihat perbandingan kinclong sebelum vs sesudah.</span>
+                      <span>Lihat sendiri perbandingan before vs. after-nya.</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Invoice resmi terbit otomatis dan bisa dicetak atau dibagikan ke WA.</span>
+                      <span>Invoice resmi otomatis dibuat — bisa dicetak atau dibagikan via WhatsApp.</span>
                     </div>
                   </div>
 
                   <div className="pt-4">
                     <Link
                       href="/order"
-                      className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-base sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-8 sm:px-10 py-4 sm:py-4.5 rounded-full transition-all duration-300 ease-out shadow-md hover:shadow-lg active:scale-95 overflow-hidden"
+                       className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-base sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-8 sm:px-10 py-4 sm:py-4.5 rounded-2xl transition-all duration-300 ease-out shadow-md hover:shadow-lg active:scale-95 overflow-hidden"
                     >
-                      <span className="transition-colors duration-300">Coba Layanan Sekarang</span>
+                      <span className="transition-colors duration-300">Try Our Service</span>
                       <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
                         <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                       </span>
@@ -501,11 +497,11 @@ export default function HomePage() {
                         className="w-full h-full object-cover"
                       />
                       <span className="absolute top-4 left-4 bg-[#000000]/90 backdrop-blur-md text-amber-400 text-xs sm:text-sm font-heading font-bold px-4 py-2 rounded-xl border border-amber-400/30 uppercase tracking-wide shadow-md">
-                        Kondisi Awal (Before)
+                        Initial Condition (Before)
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm lg:text-base text-neutral-400 italic px-1">
-                      Debu tebal dan noda tanah pada midsole &amp; outsole.
+                      Debu dan kotoran tebal di midsole &amp; outsole.
                     </p>
                   </div>
 
@@ -517,11 +513,11 @@ export default function HomePage() {
                         className="w-full h-full object-cover"
                       />
                       <span className="absolute top-4 left-4 bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold px-4 py-2 rounded-xl uppercase tracking-wide shadow-md">
-                        Hasil Cuci (After)
+                        Cleaned (After)
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm lg:text-base text-neutral-200 font-semibold px-1">
-                      Kering sempurna, wangi segar, dan bersih higienis!
+                      Kering sempurna, aroma segar, dan higienis bersih!
                     </p>
                   </div>
                 </div>
@@ -547,11 +543,11 @@ export default function HomePage() {
                 {/* Floating stat */}
                 <div className="absolute top-6 left-6 bg-white rounded-2xl px-5 py-4 border border-black/[0.07] shadow-lg">
                   <p className="font-heading font-bold text-3xl text-[#f06a60]">3×</p>
-                  <p className="text-xs text-neutral-500 font-body mt-0.5">Lebih awet dengan perawatan rutin</p>
+                  <p className="text-xs text-neutral-500 font-body mt-0.5">Tahan 3× lebih lama dengan perawatan rutin</p>
                 </div>
                 <div className="absolute bottom-6 right-6 bg-[#0d1526] rounded-2xl px-5 py-4 shadow-lg">
-                  <p className="font-heading font-bold text-2xl text-white">Rp 65rb</p>
-                  <p className="text-xs text-neutral-400 font-body mt-0.5">vs beli sepatu baru jutaan</p>
+                  <p className="font-heading font-bold text-2xl text-white">Rp 65k</p>
+                  <p className="text-xs text-neutral-400 font-body mt-0.5">dibanding beli baru dengan harga jutaan</p>
                 </div>
               </div>
 
@@ -560,35 +556,35 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
                     <ShieldCheck className="w-4 h-4 text-[#f06a60]" />
-                    Kenapa Penting?
+                    Why It Matters
                   </div>
-                  <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                    Kenapa Harus Merawat Sepatu?
+                  <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                    Why Should You Care for Your Shoes?
                   </h2>
                   <p className="text-sm sm:text-base text-neutral-600 leading-relaxed font-body">
-                    Sepatu bukan sekadar pelindung kaki — ia adalah bagian dari penampilan, 
-                    investasi, dan ekspresi diri Anda. Tanpa perawatan rutin, usia sepatu 
-                    bisa berkurang drastis, material rusak, dan tampilannya cepat kusam.
+                    Sepatu bukan sekadar pelindung kaki — mereka adalah bagian dari gaya Anda, 
+                    investasi, dan ekspresi diri Anda. Tanpa perawatan rutin, usia sepatu menurun drastis, 
+                    material cepat rusak, dan kilau pun hilang.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   {[
                     {
-                      title: 'Memperpanjang Usia Sepatu',
-                      desc: 'Debu, keringat, dan kotoran yang menumpuk merusak material dari dalam. Perawatan rutin bisa memperpanjang umur sepatu hingga 3× lebih lama.',
+                      title: 'Extends Shoe Lifespan',
+                      desc: 'Debu, keringat, dan kotoran menumpuk serta merusak material dari dalam. Perawatan rutin dapat memperpanjang umur sepatu hingga 3× lebih lama.',
                     },
                     {
-                      title: 'Menjaga Nilai & Penampilan',
-                      desc: 'Sepatu bersih dan terawat meningkatkan kepercayaan diri. Untuk sneaker koleksi, perawatan bahkan menjaga nilai jual kembali tetap tinggi.',
+                      title: 'Maintains Value & Appearance',
+                      desc: 'Sepatu yang bersih dan terawat meningkatkan kepercayaan diri. Untuk sneaker koleksi, perawatan yang tepat menjaga nilai jual kembali.',
                     },
                     {
-                      title: 'Mencegah Bau & Bakteri',
-                      desc: 'Insole yang lembab adalah sarang bakteri dan jamur. Cuci berkala memastikan sepatu Anda higienis dan nyaman dipakai setiap hari.',
+                      title: 'Prevents Odor & Bacteria',
+                      desc: 'Insole yang lembab menjadi tempat berkembang biak bakteri dan jamur. Pembersihan rutin menjaga sepatu Anda tetap higienis dan nyaman setiap hari.',
                     },
                     {
-                      title: 'Hemat Lebih Banyak',
-                      desc: 'Merawat jauh lebih murah daripada membeli baru. Satu kali cuci di Fice mulai Rp 65.000 — jauh lebih hemat dari mengganti sepatu seharga ratusan ribu.',
+                      title: 'Saves You More',
+                      desc: 'Perawatan jauh lebih murah daripada membeli baru. Satu kali cuci di Fice mulai dari Rp 65.000 — sebagian kecil dari harga sepatu baru.',
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-4 bg-[#f2ece5] rounded-2xl p-5 border border-black/[0.04]">
@@ -596,7 +592,7 @@ export default function HomePage() {
                         <CheckCircle2 className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-heading font-bold text-base sm:text-lg text-[#0d1526]">{item.title}</h4>
+                        <h4 className="font-heading font-extrabold text-base sm:text-lg text-[#0d1526]">{item.title}</h4>
                         <p className="text-xs sm:text-sm text-neutral-600 font-body leading-relaxed mt-1">{item.desc}</p>
                       </div>
                     </div>
@@ -605,7 +601,7 @@ export default function HomePage() {
 
                 <Link
                   href="/order"
-                  className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-full shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95"
+                   className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base sm:text-lg uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ease-out active:scale-95"
                 >
                   <span>Rawat Sepatu Sekarang</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -620,31 +616,31 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div className="text-center space-y-3">
               <span className="text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#f06a60]">FAQ</span>
-              <h2 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
-                Pertanyaan yang Sering Diajukan
+              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                Frequently Asked Questions
               </h2>
               <p className="text-sm sm:text-base text-neutral-600">
-                Informasi penting seputar layanan antar-jemput dan sistem operasional Fice Shoes Care.
+                Informasi penting tentang layanan jemput antar kami dan bagaimana Fice Shoes Care beroperasi.
               </p>
             </div>
 
             <div className="space-y-3">
               {[
                 {
-                  q: 'Apakah benar layanan antar-jemput ini 100% Gratis?',
-                  a: 'Ya, betul! Untuk lokasi dalam radius ≤ 20 km dari workshop kami di Bintaro (Tangerang Selatan), layanan antar-jemput gratis berlaku tanpa batas minimal (1 atau 2 pasang tetap gratis). Untuk jarak di atas 20 km (selama masih dalam area Jakarta Selatan, Tangsel, dan Tangerang), gratis antar-jemput berlaku dengan minimal order 3 pasang/item.',
+                  q: 'Is the pickup & delivery really 100% free?',
+                  a: 'Ya! Dalam radius 20 km dari workshop kami di Bintaro (Tangerang Selatan), jemput antar gratis berlaku tanpa minimum order (bahkan 1 pasang pun gratis). Di luar 20 km (masih dalam Jaksel, Tangsel, dan Tangerang), jemput antar gratis dengan minimum 3 pasang/barang.',
                 },
                 {
-                  q: 'Daerah mana saja yang masuk coverage area antar-jemput?',
-                  a: 'Coverage kami mencakup 3 wilayah: (1) Kota Tangerang Selatan: Serpong, Serpong Utara, Ciputat, Ciputat Timur, Pamulang, Pondok Aren, Setu. (2) Kota Tangerang: Ciledug, Cipondoh, Karang Tengah, Karawaci, Gading Serpong, Larangan. (3) Jakarta Selatan: Cilandak, Jagakarsa, Kebayoran Baru, Kebayoran Lama, Mampang Prapatan, Pancoran, Pasar Minggu, Pesanggrahan, Tebet, Setiabudi.',
+                  q: 'Which areas are covered for free pickup & delivery?',
+                  a: 'Cakupan kami meliputi 3 wilayah: (1) Kota Tangerang Selatan: Serpong, Serpong Utara, Ciputat, Ciputat Timur, Pamulang, Pondok Aren, Setu. (2) Kota Tangerang: Ciledug, Cipondoh, Karang Tengah, Karawaci, Gading Serpong, Larangan. (3) Jakarta Selatan: Cilandak, Jagakarsa, Kebayoran Baru, Kebayoran Lama, Mampang Prapatan, Pancoran, Pasar Minggu, Pesanggrahan, Tebet, Setiabudi.',
                 },
                 {
-                  q: 'Kapan sepatu saya dijemput jika memesan lewat dari jam 13:00?',
-                  a: 'Jika Anda membuat pesanan sebelum pukul 13.00 WIB, kurir kami bisa menjemput di hari yang sama (slot sore 14.00–18.00). Jika pemesanan dilakukan setelah pukul 13.00 WIB, jadwal penjemputan paling cepat adalah esok hari (H+1) agar rute kurir tetap teratur dan aman.',
+                  q: 'What if I order after 1 PM — when will my shoes be picked up?',
+                  a: 'Pesanan yang dibuat sebelum pukul 13:00 WIB bisa dijemput hari yang sama (slot sore 14:00–18:00). Pesanan yang dibuat setelah pukul 13:00 akan dijadwalkan hari berikutnya (H+1) agar rute kurir tetap efisien dan tepat waktu.',
                 },
                 {
-                  q: 'Kapan saya harus membayar pesanan saya?',
-                  a: 'Pembayaran dilakukan satu kali via transfer bank, setelah sepatu tiba di workshop dan kondisi fisiknya diverifikasi lewat foto QC awal. Tagihan resmi terbit di halaman lacak pesanan Anda beserta rekening tujuan.',
+                  q: 'When do I need to pay for my order?',
+                  a: 'Pembayaran dilakukan satu kali via transfer bank, setelah sepatu Anda tiba di workshop kami dan kondisi fisik diverifikasi melalui foto QC awal. Invoice resmi muncul di halaman tracking pesanan Anda beserta detail rekening tujuan.',
                 },
               ].map((item, i) => (
                 <div
@@ -655,7 +651,7 @@ export default function HomePage() {
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     className="w-full flex items-center justify-between gap-4 p-7 sm:p-8 text-left cursor-pointer group"
                   >
-                    <span className="flex items-center gap-3 font-heading font-bold text-lg sm:text-xl text-[#0d1526]">
+                    <span className="flex items-center gap-3 font-heading font-extrabold text-lg sm:text-xl text-[#0d1526]">
                       <HelpCircle className="w-5 h-5 text-[#f06a60] shrink-0" />
                       {item.q}
                     </span>
@@ -700,13 +696,13 @@ export default function HomePage() {
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#edeaf6] text-xs font-heading font-bold uppercase tracking-wider text-[#3b3a7a]">
                     <MapPin className="w-3.5 h-3.5 text-[#f06a60]" />
-                    Area Layanan Antar-Jemput
+                    Pickup & Delivery Coverage
                   </div>
-                  <h3 className="font-heading font-bold text-3xl sm:text-4xl text-[#0d1526] tracking-tight">
-                    Coverage Daerah Fice
+                  <h3 className="font-heading font-black text-3xl sm:text-4xl text-[#0d1526] tracking-tight">
+                    Areas We Serve
                   </h3>
                   <p className="text-xs sm:text-sm text-neutral-600 font-body">
-                    Fice Shoes Care melayani antar-jemput gratis untuk 3 wilayah berikut:
+                    Jemput antar gratis ke seluruh 3 wilayah ini:
                   </p>
                 </div>
 
@@ -758,8 +754,8 @@ export default function HomePage() {
                 </div>
 
                 <div className="p-4 bg-[#f2ece5] rounded-2xl text-xs text-neutral-600 font-body">
-                  <strong className="text-[#0d1526] block mb-1">Ketentuan Gratis Ongkir:</strong>
-                  Radius &le; 20 km dari workshop Bintaro bebas minimal jumlah sepatu (1 pasang pun tetap gratis!). Jarak &gt; 20 km gratis dengan minimal order 3 pasang/item.
+                  <strong className="text-[#0d1526] block mb-1">Syarat Gratis Pengiriman:</strong>
+                  Dalam radius 20 km dari workshop Bintaro kami — tanpa minimum order (bahkan 1 pasang pun gratis!). Di luar 20 km — gratis dengan minimum 3 pasang/barang.
                 </div>
 
                 <div className="pt-1">
@@ -768,7 +764,7 @@ export default function HomePage() {
                     onClick={() => setCoverageModalOpen(false)}
                     className="w-full inline-flex items-center justify-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base uppercase py-3.5 rounded-2xl transition-colors shadow-sm"
                   >
-                    <span>Pesan Antar-Jemput Sekarang</span>
+                    <span>Book Pickup & Delivery Now</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

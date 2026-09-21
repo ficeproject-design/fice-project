@@ -296,13 +296,21 @@ export default function AdminDashboardPage() {
                     <PaymentStatusBadge status={ord.paymentStatus} />
                   </td>
                   <td className="py-3.5 pr-2 text-right">
-                    <Link
-                      href={`/track/${ord.invoiceNumber}`}
-                      target="_blank"
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"
-                    >
-                      Buka Resi
-                    </Link>
+                    <div className="inline-flex items-center gap-1.5 justify-end">
+                      <Link
+                        href={`/admin/orders/${ord.id}`}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-[#0d1526] hover:bg-[#f06a60] px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        Kelola
+                      </Link>
+                      <Link
+                        href={`/track/${ord.invoiceNumber}`}
+                        target="_blank"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"
+                      >
+                        Resi
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
