@@ -47,9 +47,9 @@ export default function AdminPromosPage() {
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
 
-  // Fetch promos
+  // Fetch promos. setLoading(true) sengaja tidak di sini supaya effect
+  // tidak memanggil setState secara sinkron (rule react-hooks/set-state-in-effect).
   const fetchPromos = async () => {
-    setLoading(true);
     try {
       const res = await fetch('/api/admin/promos');
       const json = await res.json();
@@ -64,7 +64,9 @@ export default function AdminPromosPage() {
   };
 
   useEffect(() => {
-    fetchPromos();
+    (async () => {
+      await fetchPromos();
+    })();
   }, []);
 
   const handleOpenAddModal = () => {
@@ -196,8 +198,8 @@ export default function AdminPromosPage() {
 
       await fetchPromos();
       setModalOpen(false);
-    } catch (err: any) {
-      setFormError(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Terjadi kesalahan sistem.');
     } finally {
       setIsSaving(false);
     }

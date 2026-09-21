@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
+import type { Map as LeafletMap, Marker as LeafletMarker, LeafletMouseEvent } from 'leaflet';
 import { MapPin, Navigation, Search, Check, AlertCircle, Info } from 'lucide-react';
 import { calculateDistanceKm, DEFAULT_WORKSHOP_COORDS } from '@/lib/haversine';
 
@@ -23,8 +24,8 @@ export default function MapPicker({
   freeRadiusKm = 20,
 }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const customerMarkerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
+  const customerMarkerRef = useRef<LeafletMarker | null>(null);
 
   const [customerPos, setCustomerPos] = useState<{ lat: number; lng: number }>({
     lat: initialLat,
@@ -37,6 +38,15 @@ export default function MapPicker({
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  const handleUpdatePosition = (lat: number, lng: number) => {
+    const roundedLat = Math.round(lat * 10000) / 10000;
+    const roundedLng = Math.round(lng * 10000) / 10000;
+    const dist = calculateDistanceKm(workshopLat, workshopLng, roundedLat, roundedLng);
+    setCustomerPos({ lat: roundedLat, lng: roundedLng });
+    setDistanceKm(dist);
+    onLocationChange(roundedLat, roundedLng, dist);
+  };
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -108,12 +118,12 @@ export default function MapPicker({
       }).addTo(map);
       customerMarkerRef.current = customerMarker;
 
-      customerMarker.on('dragend', (e: any) => {
-        const { lat, lng } = e.target.getLatLng();
+      customerMarker.on('dragend', (e) => {
+        const { lat, lng } = (e.target as LeafletMarker).getLatLng();
         handleUpdatePosition(lat, lng);
       });
 
-      map.on('click', (e: any) => {
+      map.on('click', (e: LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         customerMarker.setLatLng([lat, lng]);
         handleUpdatePosition(lat, lng);
@@ -128,15 +138,6 @@ export default function MapPicker({
       }
     };
   }, [workshopLat, workshopLng, freeRadiusKm]);
-
-  const handleUpdatePosition = (lat: number, lng: number) => {
-    const roundedLat = Math.round(lat * 10000) / 10000;
-    const roundedLng = Math.round(lng * 10000) / 10000;
-    const dist = calculateDistanceKm(workshopLat, workshopLng, roundedLat, roundedLng);
-    setCustomerPos({ lat: roundedLat, lng: roundedLng });
-    setDistanceKm(dist);
-    onLocationChange(roundedLat, roundedLng, dist);
-  };
 
   const handleSearchAddress = async (e: React.FormEvent) => {
     e.preventDefault();

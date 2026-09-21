@@ -59,7 +59,7 @@ export default function AdminSettingsPage() {
       } else {
         setError(json.error || 'Gagal menyimpan pengaturan');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving settings:', err);
       setError('Terjadi kesalahan jaringan.');
     } finally {

@@ -33,11 +33,32 @@ export async function createSessionToken(): Promise<string> {
   return `${exp}.${await hmacHex(secret(), String(exp))}`
 }
 
+// Revocation list in-memory: efektif selama 1 proses (asumsi deploy = instance tunggal,
+// sama seperti db.json). Upgrade path: simpan revocation di DB saat migrasi SQLite.
+const revoked = new Map<string, number>() // token -> exp(ms)
+
+export function revokeSessionToken(token: string | undefined | null): void {
+  if (!token) return
+  const exp = Number(token.split('.')[0])
+  if (Number.isFinite(exp)) revoked.set(token, exp)
+}
+
+function pruneRevoked(): void {
+  const now = Date.now()
+  for (const [token, exp] of revoked) {
+    if (exp < now) revoked.delete(token)
+  }
+}
+
 export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
   if (!token) return false
+  if (revoked.has(token)) return false
   const [expStr, sig] = token.split('.')
   const exp = Number(expStr)
-  if (!Number.isFinite(exp) || exp < Date.now()) return false
+  if (!Number.isFinite(exp) || exp < Date.now()) {
+    pruneRevoked()
+    return false
+  }
   try {
     return safeEqual(await hmacHex(secret(), expStr), sig)
   } catch {

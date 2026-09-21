@@ -453,7 +453,7 @@ export default function HomePage() {
                     100% Transparency Guarantee
                   </div>
                   <h2 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight text-white leading-tight">
-                    Every Shoe Gets Photo-QC'd (Before &amp; After)
+                    Every Shoe Gets Photo-QC&apos;d (Before &amp; After)
                   </h2>
                   <p className="text-sm sm:text-base text-neutral-300 leading-relaxed max-w-xl">
                     Tenang! Saat sepatu Anda tiba di workshop kami, kurir dan teknisi kami memotret kondisi awal (sol, upper, tali) dan mencatat goresan yang sudah ada sebelumnya. Anda bisa melihat fotonya langsung di halaman tracking pesanan Anda.

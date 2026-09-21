@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       maxDiscount,
       validUntil,
       usageLimit,
+      usageLimitPerCustomer,
       description,
       isActive,
     } = body;
@@ -63,6 +64,8 @@ export async function POST(req: NextRequest) {
       maxDiscount: maxDiscount ? Number(maxDiscount) : undefined,
       validUntil: validUntil || undefined,
       usageLimit: usageLimit ? Number(usageLimit) : undefined,
+      usageLimitPerCustomer: usageLimitPerCustomer ? Number(usageLimitPerCustomer) : undefined,
+      usedBy: [],
       description: description?.trim() || undefined,
       isActive: typeof isActive === 'boolean' ? isActive : true,
     });

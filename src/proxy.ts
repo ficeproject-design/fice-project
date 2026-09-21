@@ -14,7 +14,7 @@ function unauthorized(req: NextRequest) {
 }
 
 export async function proxy(req: NextRequest) {
-  const { pathname, searchParams } = req.nextUrl
+  const { pathname } = req.nextUrl
   const method = req.method
 
   const isLoginFlow =
@@ -35,7 +35,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/admin/') ||
     (pathname === '/api/settings' && method !== 'GET') ||
-    (pathname === '/api/orders' && method === 'GET' && !searchParams.has('phone')) ||
+    (pathname === '/api/orders' && method === 'GET') ||
     (/^\/api\/orders\/[^/]+$/.test(pathname) && method === 'PATCH')
 
   if (!needsAdmin) return NextResponse.next()

@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# data runtime (db.json auto-seed saat boot; berisi data pelanggan)
+/data/db.json
+/data/uploads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

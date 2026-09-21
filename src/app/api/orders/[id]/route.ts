@@ -137,23 +137,36 @@ export async function PATCH(
         updatedOrder = updatePaymentStatus(id, paymentStatus, safeMethod);
       }
     }
-    // Action: Add QC Photo
+    // Action: Add QC Photo (data URL dikonversi ke file oleh db.ts, bukan inline base64)
     else if (action === 'add_qc_photo') {
       if (
         qcPhoto &&
         (qcPhoto.type === 'BEFORE' || qcPhoto.type === 'AFTER') &&
         typeof qcPhoto.photoUrl === 'string' &&
-        qcPhoto.photoUrl.length > 0 &&
-        qcPhoto.photoUrl.length < 2_000_000
+        qcPhoto.photoUrl.startsWith('data:') &&
+        qcPhoto.photoUrl.length < 7_000_000
       ) {
-        updatedOrder = addQCPhoto(id, {
-          type: qcPhoto.type,
-          photoUrl: qcPhoto.photoUrl,
-          notes:
-            typeof qcPhoto.notes === 'string'
-              ? qcPhoto.notes.trim().slice(0, 300) || undefined
-              : undefined,
-        });
+        try {
+          updatedOrder = addQCPhoto(id, {
+            type: qcPhoto.type,
+            photoUrl: qcPhoto.photoUrl,
+            notes:
+              typeof qcPhoto.notes === 'string'
+                ? qcPhoto.notes.trim().slice(0, 300) || undefined
+                : undefined,
+          });
+        } catch (validationError) {
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                validationError instanceof Error
+                  ? validationError.message
+                  : 'Foto QC tidak valid',
+            },
+            { status: 400 }
+          );
+        }
       }
     }
     // Action: Remove QC Photo

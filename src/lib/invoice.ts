@@ -1,5 +1,5 @@
 // Invoice and WhatsApp message generator utilities
-import { Order, SystemSettings } from './types';
+import type { Order, SystemSettings } from './types';
 
 export function formatRupiah(amount: number): string {
   return new Intl.NumberFormat('id-ID', {

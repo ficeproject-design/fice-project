@@ -99,6 +99,8 @@ export interface PromoCode {
   validUntil?: string; // Tanggal batas promo berakhir (YYYY-MM-DD)
   usageLimit?: number; // Batas total penggunaan kode promo
   usedCount: number; // Jumlah yang sudah digunakan
+  usageLimitPerCustomer?: number; // Batas pemakaian per nomor WA (mis. 1 untuk promo pelanggan baru)
+  usedBy?: string[]; // Nomor telepon ternormalisasi yang sudah memakai promo
   isActive: boolean; // Status aktif / non-aktif
   description?: string; // Keterangan promo
   createdAt: string;

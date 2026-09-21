@@ -12,7 +12,7 @@ import {
 } from './types';
 import { DEFAULT_WORKSHOP_COORDS } from './haversine';
 import { generateInvoiceNumber, formatRupiah } from './invoice';
-import { cleanPhoneDigits } from './phone';
+import { cleanPhoneDigits, normalizeIdPhone } from './phone';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'db.json');
 
@@ -521,6 +521,8 @@ export const DEFAULT_PROMOS: PromoCode[] = [
     validUntil: '2026-12-31',
     usageLimit: 100,
     usedCount: 8,
+    usageLimitPerCustomer: 1,
+    usedBy: [],
     isActive: true,
     description: 'Diskon 15% untuk pelanggan baru Fice Shoes Care (Maks. Rp 25.000, Min. Order Rp 65.000)',
     createdAt: '2026-09-01T00:00:00.000Z',
@@ -555,45 +557,33 @@ export const DEFAULT_PROMOS: PromoCode[] = [
 ];
 
 function readDb(): DatabaseSchema {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      const initialDb: DatabaseSchema = {
-        services: DEFAULT_SERVICES,
-        customers: INITIAL_CUSTOMERS,
-        orders: INITIAL_ORDERS,
-        settings: DEFAULT_SETTINGS,
-        promos: DEFAULT_PROMOS,
-      };
-      fs.writeFileSync(DATA_FILE, JSON.stringify(initialDb, null, 2), 'utf-8');
-      return initialDb;
-    }
-    const data = fs.readFileSync(DATA_FILE, 'utf-8');
-    const parsed = JSON.parse(data) as DatabaseSchema;
-    if (!parsed.promos) {
-      parsed.promos = DEFAULT_PROMOS;
-      writeDb(parsed);
-    }
-    return parsed;
-  } catch (error) {
-    console.error('Error reading database file:', error);
-    return {
+  if (!fs.existsSync(DATA_FILE)) {
+    const initialDb: DatabaseSchema = {
       services: DEFAULT_SERVICES,
       customers: INITIAL_CUSTOMERS,
       orders: INITIAL_ORDERS,
       settings: DEFAULT_SETTINGS,
       promos: DEFAULT_PROMOS,
     };
+    writeDb(initialDb);
+    return initialDb;
   }
+  // ponytail: korrupt = error keras, bukan fallback seed (fallback = data asli tertimpa demo).
+  // Upgrade path: SQLite dengan constraint + transaction saat migrasi DB.
+  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+  const parsed = JSON.parse(data) as DatabaseSchema;
+  if (!parsed.promos) {
+    parsed.promos = DEFAULT_PROMOS;
+    writeDb(parsed);
+  }
+  return parsed;
 }
 
 function writeDb(data: DatabaseSchema): void {
-  try {
-    const tempFile = `${DATA_FILE}.tmp`;
-    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
-    fs.renameSync(tempFile, DATA_FILE);
-  } catch (error) {
-    console.error('Error writing to database file:', error);
-  }
+  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+  const tempFile = `${DATA_FILE}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tempFile, DATA_FILE);
 }
 
 // Service Methods
@@ -689,13 +679,18 @@ export function createOrder(
 
   db.orders.unshift(order);
 
-  // If order used promoCode, increment usage
+  // If order used promoCode, increment usage + record phone for per-customer cap
   if (newOrder.promoCode) {
     const promo = (db.promos || []).find(
       (p) => p.code.toUpperCase() === newOrder.promoCode?.trim().toUpperCase()
     );
     if (promo) {
       promo.usedCount = (promo.usedCount || 0) + 1;
+      const phoneKey = normalizeIdPhone(savedCustomer.phone);
+      if (phoneKey) {
+        promo.usedBy = promo.usedBy || [];
+        if (!promo.usedBy.includes(phoneKey)) promo.usedBy.push(phoneKey);
+      }
     }
   }
 
@@ -735,17 +730,43 @@ export function updatePaymentStatus(
   return null;
 }
 
+// QC photos disimpan sebagai file (bukan base64 inline) supaya db.json tetap kecil.
+const UPLOADS_DIR = path.join(process.cwd(), 'data', 'uploads');
+const QC_ALLOWED_EXT: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
+
+function saveDataUrlAsFile(dataUrl: string): string {
+  const m = dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+  if (!m) throw new Error('Format foto tidak valid (harus data URL base64)');
+  const ext = QC_ALLOWED_EXT[m[1].toLowerCase()];
+  if (!ext) throw new Error('Tipe foto harus PNG/JPEG/WebP');
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length === 0 || buf.length > 5 * 1024 * 1024) {
+    throw new Error('Ukuran foto 0 - 5 MB');
+  }
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  const name = `qc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  fs.writeFileSync(path.join(UPLOADS_DIR, name), buf);
+  return `/api/uploads/${name}`;
+}
+
 export function addQCPhoto(
   orderId: string,
   photo: { type: 'BEFORE' | 'AFTER'; photoUrl: string; notes?: string }
 ): Order | null {
+  const storedUrl = photo.photoUrl.startsWith('data:')
+    ? saveDataUrlAsFile(photo.photoUrl)
+    : photo.photoUrl;
   const db = readDb();
   const order = db.orders.find((o) => o.id === orderId);
   if (order) {
     const qcPhoto: QualityCheckPhoto = {
       id: 'qc-' + Date.now(),
       type: photo.type,
-      photoUrl: photo.photoUrl,
+      photoUrl: storedUrl,
       notes: photo.notes,
       createdAt: new Date().toISOString(),
     };
@@ -761,11 +782,20 @@ export function deleteQCPhoto(orderId: string, photoId: string): Order | null {
   const db = readDb();
   const order = db.orders.find((o) => o.id === orderId);
   if (!order) return null;
+  const removed = order.qcPhotos.find((p) => p.id === photoId);
   const before = order.qcPhotos.length;
   order.qcPhotos = order.qcPhotos.filter((p) => p.id !== photoId);
   if (order.qcPhotos.length !== before) {
     order.updatedAt = new Date().toISOString();
     writeDb(db);
+    if (removed && removed.photoUrl.startsWith('/api/uploads/')) {
+      const file = path.basename(removed.photoUrl);
+      try {
+        fs.unlinkSync(path.join(UPLOADS_DIR, file));
+      } catch {
+        // file sudah hilang: biarkan, metadata tetap konsisten
+      }
+    }
   }
   return order;
 }
@@ -827,9 +857,31 @@ export function getSettings(): SystemSettings {
   return readDb().settings;
 }
 
+const SETTING_KEYS: (keyof SystemSettings)[] = [
+  'workshopName', 'workshopAddress', 'workshopCity', 'workshopLat', 'workshopLng',
+  'adminPhone', 'freeRadiusKm', 'minItemsBeyondRadius', 'cutoffHour',
+  'qrisImageUrl', 'bankAccountInfo',
+];
+const NUMERIC_SETTINGS: (keyof SystemSettings)[] = [
+  'workshopLat', 'workshopLng', 'freeRadiusKm', 'minItemsBeyondRadius', 'cutoffHour',
+];
+
 export function updateSettings(newSettings: Partial<SystemSettings>): SystemSettings {
+  // Whitelist key + tipe: body API tidak bisa nyuntik field asing ke db.
+  const clean: Partial<SystemSettings> = {};
+  for (const key of SETTING_KEYS) {
+    const value = (newSettings as Record<string, unknown>)[key];
+    if (value === undefined) continue;
+    if (NUMERIC_SETTINGS.includes(key)) {
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        (clean as Record<string, number>)[key] = value;
+      }
+    } else if (typeof value === 'string') {
+      (clean as Record<string, string>)[key] = value.trim().slice(0, 500);
+    }
+  }
   const db = readDb();
-  db.settings = { ...db.settings, ...newSettings };
+  db.settings = { ...db.settings, ...clean };
   writeDb(db);
   return db.settings;
 }
@@ -938,7 +990,8 @@ export function deletePromo(id: string): boolean {
 
 export function validatePromoCode(
   rawCode: string,
-  subtotal: number
+  subtotal: number,
+  phone?: string
 ): {
   valid: boolean;
   message?: string;
@@ -981,6 +1034,18 @@ export function validatePromoCode(
       valid: false,
       message: 'Kuota penggunaan kode promo ini sudah habis.',
     };
+  }
+
+  // Check per-customer limit (e.g. promo khusus pelanggan baru, 1x per nomor WA)
+  if (promo.usageLimitPerCustomer && phone) {
+    const key = normalizeIdPhone(phone);
+    const alreadyUsed = key !== '' && (promo.usedBy || []).includes(key);
+    if (alreadyUsed) {
+      return {
+        valid: false,
+        message: `Nomor Anda sudah pernah memakai kode ${promo.code}. Promo ini maksimal ${promo.usageLimitPerCustomer}x per pelanggan.`,
+      };
+    }
   }
 
   // Check min order amount

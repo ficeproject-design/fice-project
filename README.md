@@ -12,13 +12,21 @@ Web order jasa cuci dan perawatan sepatu, tas, dan aksesori dengan free antar-je
 ## Menjalankan
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local   # isi ADMIN_PASSWORD dan AUTH_SECRET
 npm run dev
 ```
 
 - Website: http://localhost:3000
 - Panel admin: http://localhost:3000/admin (login pakai `ADMIN_PASSWORD`)
+- Test murni (haversine/phone/invoice): `npm test`
+
+## Catatan keamanan & runtime
+
+- `data/db.json` dan `data/uploads/` di-gitignore; `db.json` dibuat otomatis (seed demo) saat first run. Backup manual folder `data/`.
+- Foto QC disimpan sebagai file di `data/uploads/`, disajikan lewat `/api/uploads/[id]` (bukan base64 di db).
+- `GET /api/orders` (daftar penuh) khusus admin; pelacakan publik hanya per invoice via `/api/orders/[id]` — nomor invoice efektif sebagai kunci akses, jangan di-share publik.
+- Login admin & pembuatan order dibatasi rate-limit in-memory (per proses, sesuai asumsi instance tunggal).
 
 ## Struktur
 

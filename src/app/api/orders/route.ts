@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrders, createOrder, getSettings, getServiceById } from '@/lib/db';
 import { checkOrderEligibility } from '@/lib/haversine';
-import { isValidPhone, PHONE_HINT, cleanPhoneDigits } from '@/lib/phone';
+import { isValidPhone, PHONE_HINT } from '@/lib/phone';
 import { Order } from '@/lib/types';
 
 // In-memory sliding-window limiter (per process): 10 POSTs / 5 min / IP.
@@ -21,35 +21,15 @@ function isRateLimited(key: string): boolean {
   return false;
 }
 
-/** Normalize 62… / 0… to a comparable 0… form. */
-function normPhone(digits: string): string {
-  if (digits.startsWith('62')) return '0' + digits.slice(2);
-  return digits;
-}
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const phone = searchParams.get('phone');
     const status = searchParams.get('status');
 
+    // Daftar order penuh = khusus admin (dijaga proxy.ts). Dulu ada query ?phone=
+    // publik berbasis digit akhir — vektor enumeration PII, sudah dihapus.
+    // Pelacakan publik memakai /api/orders/[id] (invoice = capability tak tertebak).
     let orders = getOrders();
-
-    if (phone) {
-      const cleanPhone = normPhone(cleanPhoneDigits(phone));
-      // Anti-harvest: require at least 4 digits; match exact or trailing
-      // digits only (e.g. full number or last-4), never substring/prefix scans.
-      if (cleanPhone.length < 4) {
-        return NextResponse.json(
-          { success: false, error: 'Pencarian nomor minimal 4 digit terakhir.' },
-          { status: 400 }
-        );
-      }
-      orders = orders.filter((o) => {
-        const stored = normPhone(cleanPhoneDigits(o.customer.phone));
-        return stored === cleanPhone || stored.endsWith(cleanPhone);
-      });
-    }
 
     if (status) {
       orders = orders.filter((o) => o.status === status);
@@ -186,8 +166,15 @@ export async function POST(req: NextRequest) {
 
     if (body.promoCode) {
       const { validatePromoCode } = await import('@/lib/db');
-      const promoResult = validatePromoCode(body.promoCode, subtotal);
-      if (promoResult.valid && promoResult.discountAmount) {
+      // phone dipakai untuk cek batas pemakaian per pelanggan (mis. promo baru 1x)
+      const promoResult = validatePromoCode(body.promoCode, subtotal, customer.phone);
+      if (!promoResult.valid) {
+        return NextResponse.json(
+          { success: false, error: promoResult.message },
+          { status: 400 }
+        );
+      }
+      if (promoResult.discountAmount) {
         promoCode = promoResult.promo?.code || body.promoCode.toUpperCase();
         discountAmount = promoResult.discountAmount;
       }

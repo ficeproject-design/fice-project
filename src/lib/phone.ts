@@ -4,6 +4,13 @@ export function cleanPhoneDigits(raw: string): string {
   return (raw || '').replace(/[^0-9]/g, '');
 }
 
+/** Normalize 62… / 0… forms to one comparable 0… key (for CRM + promo dedupe). */
+export function normalizeIdPhone(raw: string): string {
+  const digits = cleanPhoneDigits(raw);
+  if (digits.startsWith('62')) return '0' + digits.slice(2);
+  return digits;
+}
+
 /**
  * Strict ID mobile validation:
  * - digits only after stripping spaces/dashes/plus

@@ -35,7 +35,9 @@ import {
 import { formatRupiah } from '@/lib/invoice';
 import { isValidPhone, PHONE_HINT } from '@/lib/phone';
 import { readCart, writeCart, clearCart } from '@/lib/cart';
-import { Service } from '@/lib/types';
+import { Service, ServiceCategory } from '@/lib/types';
+
+type PickupDateOption = ReturnType<typeof getAvailablePickupDates>[number];
 
 // Dynamic import for Leaflet map picker
 const MapPicker = dynamic(() => import('@/components/MapPicker'), {
@@ -50,7 +52,7 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
 interface SelectedItem {
   serviceId: string;
   serviceName: string;
-  category: any;
+  category: ServiceCategory;
   price: number;
   quantity: number;
   itemNotes: string;
@@ -82,10 +84,12 @@ export default function OrderPage() {
   const [distanceKm, setDistanceKm] = useState(0);
   const [mapPinTouched, setMapPinTouched] = useState(false);
 
-  // Step 3: Schedule
-  const [availableDates, setAvailableDates] = useState<any[]>([]);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState<'morning' | 'afternoon'>('afternoon');
+  // Step 3: Schedule. Dihitung saat init, bukan di effect (tanpa setState sinkron).
+  const [availableDates] = useState<PickupDateOption[]>(() => getAvailablePickupDates(13));
+  const [selectedDate, setSelectedDate] = useState(() => availableDates[0]?.date ?? '');
+  const [selectedSlot, setSelectedSlot] = useState<'morning' | 'afternoon'>(
+    () => availableDates[0]?.availableSlots[0] ?? 'afternoon'
+  );
 
   // Step 4: Catatan pesanan
   const [orderNotes, setOrderNotes] = useState('');
@@ -131,13 +135,6 @@ export default function OrderPage() {
       }
     }
     loadServices();
-
-    const dates = getAvailablePickupDates(13);
-    setAvailableDates(dates);
-    if (dates.length > 0) {
-      setSelectedDate(dates[0].date);
-      setSelectedSlot(dates[0].availableSlots[0]);
-    }
   }, []);
 
   const handleQuantityChange = (service: Service, delta: number) => {
@@ -312,9 +309,9 @@ export default function OrderPage() {
       // Order placed — persisted cart is now stale, drop it.
       clearCart();
       router.push(`/track/${json.data.invoiceNumber}?just_ordered=true`);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Order submission error:', err);
-      setSubmitError(err.message || 'A system error occurred. Please try again.');
+      setSubmitError(err instanceof Error && err.message ? err.message : 'A system error occurred. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -499,12 +496,12 @@ export default function OrderPage() {
 
                   {/* Category Filter Tabs */}
                   <div className="flex flex-wrap items-center gap-1.5 bg-[#f2ece5]/70 p-1.5 rounded-2xl border border-black/[0.06] self-start sm:self-auto">
-                    {[
-                      { id: 'all', label: 'All' },
+                     {([
+                       { id: 'all', label: 'All' },
                       { id: 'shoes', label: 'Shoes' },
                       { id: 'bag', label: 'Bags' },
                       { id: 'accessories', label: 'Accessories' },
-                    ].map((cat) => {
+                    ] as const).map((cat) => {
                       const isActive = categoryFilter === cat.id;
                       const count = Object.values(selectedItems)
                         .filter((item) => cat.id === 'all' || item.category === cat.id)
@@ -514,7 +511,7 @@ export default function OrderPage() {
                         <button
                           key={cat.id}
                           type="button"
-                          onClick={() => setCategoryFilter(cat.id as any)}
+                          onClick={() => setCategoryFilter(cat.id)}
                           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-heading font-bold transition-all cursor-pointer ${
                             isActive
                               ? 'bg-[#0d1526] text-white shadow-xs'

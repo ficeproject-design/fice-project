@@ -4,7 +4,7 @@ import { validatePromoCode } from '@/lib/db';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { code, subtotal } = body;
+    const { code, subtotal, phone } = body;
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = validatePromoCode(code, subtotal);
+    const result = validatePromoCode(code, subtotal, typeof phone === 'string' ? phone : undefined);
 
     if (!result.valid) {
       return NextResponse.json(
