@@ -31,6 +31,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'shoes',
     name: 'Deep Clean Shoes',
     description: 'Pembersihan menyeluruh bagian luar, midsole, insole, outsole, dan tali sepatu.',
+    longDescription:
+      'Layanan cuci menyeluruh untuk sneakers harian Anda. Setiap bagian dibersihkan satu per satu: sisi luar (upper), garis midsole, sol dalam (insole), sol luar (outsole), hingga tali sepatu yang dicuci terpisah. Cocok untuk perawatan rutin agar sepatu kesayangan tetap bersih dan nyaman dipakai.',
     estimatedDays: '2 - 3 Hari',
     price: 65000,
     popular: true,
@@ -40,6 +42,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'shoes',
     name: 'Special Treatment - Suede',
     description: 'Perawatan material khusus Suede & Nubuck dengan sabun khusus agar bulu halus tetap lembut dan tidak kaku.',
+    longDescription:
+      'Suede dan nubuck butuh penanganan khusus karena bulunya mudah kaku dan berubah warna bila dicuci sembarangan. Kami memakai sabun khusus suede dan teknik kering yang menjaga bulu tetap lembut dan warna tetap rata. Ideal untuk sneakers dan boots berbahan suede kesayangan Anda.',
     estimatedDays: '3 Hari',
     price: 75000,
   },
@@ -48,6 +52,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'shoes',
     name: 'Special Treatment - Leather / Kulit',
     description: 'Pembersihan dan conditioning kulit asli/sintetis untuk menjaga kelembapan serta mencegah kerutan dan pecah.',
+    longDescription:
+      'Sepatu kulit, asli maupun sintetis, dibersihkan lalu diberi conditioning agar kelembabannya terjaga. Perawatan ini membantu mencegah kerutan dini dan permukaan yang pecah-pecah. Direkomendasikan untuk dress shoes, boots kulit, dan sneakers premium berbahan kulit.',
     estimatedDays: '3 Hari',
     price: 90000,
     popular: true,
@@ -57,6 +63,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'shoes',
     name: 'Little One Care (Kids Shoes)',
     description: 'Pembersihan higienis khusus sepatu anak dengan formula ramah anak dan anti-bakteri.',
+    longDescription:
+      'Sepatu anak cepat kotor karena dipakai aktif setiap hari. Layanan ini memakai formula ramah anak dan anti-bakteri agar sepatu bersih higienis dan aman dipakai kembali. Pilihan praktis untuk sepatu sekolah dan sepatu main.',
     estimatedDays: '2 - 3 Hari',
     price: 40000,
   },
@@ -65,6 +73,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'shoes',
     name: 'Womens Care',
     description: 'Deep clean khusus Heels, Wedges, dan Flat shoes.',
+    longDescription:
+      'Model wanita seperti heels, wedges, dan flat shoes punya bentuk dan material yang butuh ketelitian ekstra. Kami membersihkan setiap lekuknya dengan hati-hati, termasuk hak dan sol yang sering terlewat. Sepatu kembali bersih tanpa merusak bentuk aslinya.',
     estimatedDays: '2 - 3 Hari',
     price: 45000,
   },
@@ -74,6 +84,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'bag',
     name: 'Bag Deep Clean (Small)',
     description: 'Pembersihan tas ukuran kecil (clutch, waist bag, mini sling bag).',
+    longDescription:
+      'Clutch, waist bag, dan mini sling bag dibersihkan menyeluruh luar dan dalam. Ukurannya yang kecil justru butuh ketelitian karena banyak detail seperti resleting, kantong kecil, dan jahitan tepi. Tas kecil favorit Anda kembali bersih dan siap dipakai.',
     estimatedDays: '3 - 4 Hari',
     price: 65000,
   },
@@ -82,6 +94,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'bag',
     name: 'Bag Deep Clean (Medium)',
     description: 'Pembersihan tas ukuran sedang (backpack standar, shoulder bag, tote bag).',
+    longDescription:
+      'Ransel harian, shoulder bag, dan tote bag menampung debu dan noda dari pemakaian setiap hari. Kami membersihkan seluruh permukaan, bagian dalam, tali, dan aksennya satu per satu. Cocok untuk tas kerja, tas kuliah, dan tas traveling ringan.',
     estimatedDays: '3 - 4 Hari',
     price: 85000,
     popular: true,
@@ -91,6 +105,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'bag',
     name: 'Bag Deep Clean (Large)',
     description: 'Pembersihan tas ukuran besar (travel bag, duffel, backpack gunung, tote bag besar).',
+    longDescription:
+      'Travel bag, duffel, dan carrier gunung berukuran besar dan sering terpapar debu perjalanan. Kami membersihkan seluruh bagiannya termasuk kompartemen dalam dan tali ransel yang tebal. Tas besar Anda kembali segar dan siap untuk perjalanan berikutnya.',
     estimatedDays: '3 - 4 Hari',
     price: 110000,
   },
@@ -100,6 +116,8 @@ const DEFAULT_SERVICES: Service[] = [
     category: 'accessories',
     name: 'Hat, Wallet & Pouch Deep Clean',
     description: 'Pembersihan menyeluruh untuk topi (snapback/baseball), dompet, atau pouch kosmetik/gadget.',
+    longDescription:
+      'Topi yang sering dipakai menumpuk keringat dan debu di bagian dalam. Dompet dan pouch pun menampung kotoran dari tangan dan saku. Kami membersihkan menyeluruh bagian luar dan dalam agar aksesori Anda kembali bersih dan nyaman dipakai sehari-hari.',
     estimatedDays: '2 - 3 Hari',
     price: 30000,
     popular: true,
@@ -113,7 +131,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   workshopLat: DEFAULT_WORKSHOP_COORDS.lat,
   workshopLng: DEFAULT_WORKSHOP_COORDS.lng,
   adminPhone: '08161885553',
-  freeRadiusKm: 20,
+  freeRadiusKm: 15,
   minItemsBeyondRadius: 3,
   cutoffHour: 13,
   bankAccountInfo: 'BCA 6030611185 a.n. Fice Shoes Care',
@@ -508,6 +526,165 @@ const INITIAL_ORDERS: Order[] = [
     paidAt: '2026-09-16T10:00:00.000Z',
     customerReview: '3 sepatu anak saya yang super kotor jadi bersih semua! Anti bakterinya juga penting banget buat sepatu anak. Pasti langganan.',
   },
+  {
+    id: 'ord-107',
+    invoiceNumber: 'INV-202609-0007',
+    customer: INITIAL_CUSTOMERS[3],
+    items: [
+      {
+        id: 'item-11',
+        serviceId: 'srv-shoes-womens',
+        serviceName: 'Womens Care',
+        category: 'shoes',
+        price: 45000,
+        quantity: 1,
+        itemNotes: 'Charles & Keith Heels Nude',
+      },
+      {
+        id: 'item-12',
+        serviceId: 'srv-bag-small',
+        serviceName: 'Bag Deep Clean (Small)',
+        category: 'bag',
+        price: 65000,
+        quantity: 1,
+        itemNotes: 'Clutch Zara Gold',
+      },
+    ],
+    pickupDate: '2026-09-18',
+    pickupSlot: 'afternoon',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'TRANSFER',
+    distanceKm: 8.5,
+    pickupFee: 0,
+    subtotal: 110000,
+    totalAmount: 110000,
+    qcPhotos: [
+      {
+        id: 'qc-11',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&auto=format&fit=crop&q=80',
+        notes: 'Heels berdebu dan ada noda di bagian strap. Clutch kusam.',
+        createdAt: '2026-09-18T15:00:00.000Z',
+      },
+      {
+        id: 'qc-12',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&auto=format&fit=crop&q=80',
+        notes: 'Heels kinclong, strap bersih. Clutch gold kembali menyala.',
+        createdAt: '2026-09-19T11:00:00.000Z',
+      },
+    ],
+    notes: 'Mau dipakai untuk kondangan Sabtu ini.',
+    createdAt: '2026-09-17T09:00:00.000Z',
+    updatedAt: '2026-09-19T12:00:00.000Z',
+    paidAt: '2026-09-18T17:00:00.000Z',
+    customerReview: 'Heels kondangan saya balik mulus, clutch juga kayak baru! Pengerjaannya cepat, adminnya ramah banget.',
+  },
+  {
+    id: 'ord-108',
+    invoiceNumber: 'INV-202609-0008',
+    customer: INITIAL_CUSTOMERS[5],
+    items: [
+      {
+        id: 'item-13',
+        serviceId: 'srv-shoes-kids',
+        serviceName: 'Little One Care (Kids Shoes)',
+        category: 'shoes',
+        price: 40000,
+        quantity: 2,
+        itemNotes: 'Sepatu Sekolah Bata & Sandal Gunung Anak',
+      },
+    ],
+    pickupDate: '2026-09-19',
+    pickupSlot: 'morning',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'QRIS',
+    distanceKm: 6.7,
+    pickupFee: 0,
+    subtotal: 80000,
+    totalAmount: 80000,
+    qcPhotos: [
+      {
+        id: 'qc-13',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=600&auto=format&fit=crop&q=80',
+        notes: 'Sepatu sekolah penuh noda lumpur dan bau.',
+        createdAt: '2026-09-19T10:00:00.000Z',
+      },
+      {
+        id: 'qc-14',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=600&auto=format&fit=crop&q=80',
+        notes: 'Bersih total, wangi segar, siap dipakai sekolah Senin.',
+        createdAt: '2026-09-20T09:00:00.000Z',
+      },
+    ],
+    notes: '',
+    createdAt: '2026-09-18T08:00:00.000Z',
+    updatedAt: '2026-09-20T10:00:00.000Z',
+    paidAt: '2026-09-19T12:00:00.000Z',
+    customerReview: 'Sepatu sekolah anak yang bau lumpur jadi wangi dan bersih! Kurirnya juga tepat waktu banget.',
+  },
+  {
+    id: 'ord-109',
+    invoiceNumber: 'INV-202609-0009',
+    customer: INITIAL_CUSTOMERS[2],
+    items: [
+      {
+        id: 'item-14',
+        serviceId: 'srv-bag-large',
+        serviceName: 'Bag Deep Clean (Large)',
+        category: 'bag',
+        price: 110000,
+        quantity: 1,
+        itemNotes: 'Duffel Bag Adidas Hitam',
+      },
+      {
+        id: 'item-15',
+        serviceId: 'srv-shoes-suede',
+        serviceName: 'Special Treatment - Suede',
+        category: 'shoes',
+        price: 75000,
+        quantity: 1,
+        itemNotes: 'Clarks Desert Boot Suede Coklat',
+      },
+    ],
+    pickupDate: '2026-09-20',
+    pickupSlot: 'morning',
+    status: 'COMPLETED',
+    paymentModel: 'MODEL_B',
+    paymentStatus: 'PAID',
+    paymentMethod: 'TRANSFER',
+    distanceKm: 3.2,
+    pickupFee: 0,
+    subtotal: 185000,
+    totalAmount: 185000,
+    qcPhotos: [
+      {
+        id: 'qc-15',
+        type: 'BEFORE',
+        photoUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
+        notes: 'Duffel bag bau apek dan bernoda. Suede Clarks kaku dan pudar.',
+        createdAt: '2026-09-20T10:30:00.000Z',
+      },
+      {
+        id: 'qc-16',
+        type: 'AFTER',
+        photoUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=80',
+        notes: 'Tas wangi dan bersih. Suede lembut dan warnanya hidup lagi.',
+        createdAt: '2026-09-21T13:00:00.000Z',
+      },
+    ],
+    notes: 'Tas buat mudik minggu depan.',
+    createdAt: '2026-09-19T15:00:00.000Z',
+    updatedAt: '2026-09-21T14:00:00.000Z',
+    paidAt: '2026-09-20T16:00:00.000Z',
+    customerReview: 'Duffel yang bau apek jadi wangi, Clarks suede saya lentur lagi! Worth it banget plus gratis antar-jemput.',
+  },
 ];
 
 export const DEFAULT_PROMOS: PromoCode[] = [
@@ -587,12 +764,21 @@ function writeDb(data: DatabaseSchema): void {
 }
 
 // Service Methods
+// ponytail: db.json lama tidak punya longDescription (seed sekali saat file dibuat),
+// jadi merge dari DEFAULT_SERVICES saat baca, tanpa menimpa data yang sudah ada.
+function withLongDescription(s: Service): Service {
+  if (s.longDescription) return s;
+  const fallback = DEFAULT_SERVICES.find((d) => d.id === s.id);
+  return fallback?.longDescription ? { ...s, longDescription: fallback.longDescription } : s;
+}
+
 export function getServices(): Service[] {
-  return readDb().services;
+  return readDb().services.map(withLongDescription);
 }
 
 export function getServiceById(id: string): Service | undefined {
-  return readDb().services.find((s) => s.id === id);
+  const found = readDb().services.find((s) => s.id === id);
+  return found ? withLongDescription(found) : undefined;
 }
 
 export function updateService(updated: Service): boolean {
@@ -622,6 +808,16 @@ export function getOrderByInvoice(invoiceNumber: string): Order | undefined {
   return readDb().orders.find(
     (o) => o.invoiceNumber.toUpperCase() === clean || o.id === invoiceNumber
   );
+}
+
+// Lookup publik untuk tracking via nomor HP: cocok PERSIS (bukan sebagian)
+// setelah normalisasi 0…/62…, urut terbaru dulu.
+export function getOrdersByPhone(rawPhone: string): Order[] {
+  const key = normalizeIdPhone(rawPhone);
+  if (!key) return [];
+  return readDb()
+    .orders.filter((o) => normalizeIdPhone(o.customer.phone) === key)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function createOrder(

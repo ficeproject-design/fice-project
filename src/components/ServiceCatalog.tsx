@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Plus,
   Minus,
   ShoppingBag,
   ArrowRight,
+  ArrowUpRight,
   RefreshCw,
   AlertCircle,
   Trash2,
@@ -83,7 +83,7 @@ export default function ServiceCatalog() {
     <>
       {/* Filter kategori */}
       <div
-        className="flex flex-wrap items-center gap-1.5 bg-[#f5f3f0] p-1.5 rounded-full border border-black/[0.06] shadow-sm w-fit mb-8"
+        className="flex flex-wrap items-center gap-1.5 bg-[#f5f3f0] p-1.5 rounded-2xl border border-black/[0.06] shadow-sm w-fit mb-8"
         role="group"
         aria-label="Filter kategori layanan"
       >
@@ -93,7 +93,7 @@ export default function ServiceCatalog() {
             type="button"
             onClick={() => setCategory(c)}
             aria-pressed={category === c}
-            className={`px-5 sm:px-7 py-3 rounded-xl text-sm font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
+            className={`px-5 sm:px-7 py-3 rounded-2xl text-sm font-heading font-bold uppercase tracking-normal transition-all duration-200 cursor-pointer ${
               category === c
                 ? 'bg-[#0d1526] text-white shadow-sm'
                 : 'text-[#0d1526]/70 hover:text-[#0d1526] hover:bg-black/[0.06]'
@@ -137,18 +137,34 @@ export default function ServiceCatalog() {
             return (
               <div
                 key={srv.id}
-                className="bg-white rounded-[28px] p-5 sm:p-6 border border-black/[0.08] hover:border-[#f06a60]/60 transition-colors flex flex-col justify-between gap-4"
+                role="link"
+                tabIndex={0}
+                aria-label={`Lihat detail ${srv.name}`}
+                onClick={() => router.push(`/harga/${srv.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/harga/${srv.id}`);
+                  }
+                }}
+                className="group bg-white rounded-[28px] p-5 sm:p-6 border border-black/[0.08] hover:border-[#f06a60]/60 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between gap-4"
               >
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-slate-500">
                       {CATEGORY_LABELS[srv.category]}
                     </span>
-                    {srv.popular && (
-                      <span className="bg-[#f06a60] text-white text-[10px] font-heading font-black uppercase px-2.5 py-1 rounded-full">
-                        Populer
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-heading font-bold uppercase tracking-wider text-slate-400 group-hover:text-[#f06a60] transition-colors">
+                        Detail
+                        <ArrowUpRight className="w-3.5 h-3.5" />
                       </span>
-                    )}
+                      {srv.popular && (
+                        <span className="bg-[#f06a60] text-white text-[10px] font-heading font-black uppercase px-2.5 py-1 rounded-full">
+                          Populer
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#0d1526] leading-tight">
                     {srv.name}
@@ -156,20 +172,17 @@ export default function ServiceCatalog() {
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
                     {srv.description}
                   </p>
-                  <Link
-                    href={`/harga/${srv.id}`}
-                    className="text-xs text-[#f06a60] font-heading font-bold hover:underline inline-flex items-center gap-1 pt-0.5"
-                  >
-                    Lihat Detail
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
                   <p className="text-[11px] text-slate-500 inline-flex items-center gap-1 pt-1">
                     <Clock className="w-3.5 h-3.5 text-[#f06a60]" />
                     Perkiraan selesai {srv.estimatedDays}
                   </p>
                 </div>
 
-                <div className="pt-3.5 border-t border-black/[0.06] flex items-center justify-between gap-3">
+                <div
+                  className="pt-3.5 border-t border-black/[0.06] flex items-center justify-between gap-3"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
                   <div>
                     <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">
                       Tarif / item

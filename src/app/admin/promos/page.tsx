@@ -7,8 +7,6 @@ import {
   Ticket,
   Search,
   CheckCircle2,
-  XCircle,
-  Clock,
   Calendar,
   Trash2,
   Edit3,
@@ -23,10 +21,19 @@ import {
 import { PromoCode, PromoDiscountType } from '@/lib/types';
 import { formatRupiah } from '@/lib/invoice';
 
+function getPromoHealth(p: PromoCode): 'ACTIVE' | 'EXPIRED_OR_EXHAUSTED' | 'INACTIVE' {
+  const isExpired = p.validUntil ? new Date() > new Date(`${p.validUntil}T23:59:59`) : false;
+  const isExhausted = p.usageLimit ? p.usedCount >= p.usageLimit : false;
+  if (!p.isActive) return 'INACTIVE';
+  if (isExpired || isExhausted) return 'EXPIRED_OR_EXHAUSTED';
+  return 'ACTIVE';
+}
+
 export default function AdminPromosPage() {
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'EXPIRED_OR_EXHAUSTED' | 'INACTIVE'>('ALL');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Modal State
@@ -211,14 +218,20 @@ export default function AdminPromosPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const filteredPromos = promos.filter(
-    (p) =>
+  const activeCount = promos.filter((p) => getPromoHealth(p) === 'ACTIVE').length;
+  const issueCount = promos.filter((p) => getPromoHealth(p) === 'EXPIRED_OR_EXHAUSTED').length;
+  const inactiveCount = promos.filter((p) => !p.isActive).length;
+  const totalUsedCount = promos.reduce((sum, p) => sum + (p.usedCount || 0), 0);
+
+  const filteredPromos = promos.filter((p) => {
+    if (statusFilter !== 'ALL' && getPromoHealth(p) !== statusFilter) {
+      return false;
+    }
+    return (
       p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const activeCount = promos.filter((p) => p.isActive).length;
-  const totalUsedCount = promos.reduce((sum, p) => sum + (p.usedCount || 0), 0);
+    );
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -229,7 +242,7 @@ export default function AdminPromosPage() {
             <Tag className="w-3.5 h-3.5" />
             Promo &amp; Diskon
           </div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] tracking-tight uppercase">
             Manajemen Kode Promo &amp; Diskon
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -271,7 +284,7 @@ export default function AdminPromosPage() {
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block">Voucher Aktif</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block">Siap Pakai</span>
             <span className="text-2xl sm:text-3xl font-heading font-bold text-emerald-600 mt-0.5 block">{activeCount}</span>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -291,20 +304,18 @@ export default function AdminPromosPage() {
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">Tipe Diskon</span>
-            <span className="text-xs font-bold text-slate-700 mt-1 block">
-              % Persen &amp; Rp Nominal
-            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600 block">Habis / Lewat</span>
+            <span className="text-2xl sm:text-3xl font-heading font-bold text-rose-600 mt-0.5 block">{issueCount}</span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <Percent className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+            <AlertCircle className="w-5 h-5" />
           </div>
         </div>
       </div>
 
-      {/* Search Toolbar */}
-      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-        <div className="relative w-full max-w-md">
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="relative w-full lg:w-80">
           <input
             type="text"
             value={searchQuery}
@@ -323,9 +334,41 @@ export default function AdminPromosPage() {
           )}
         </div>
 
-        <span className="text-xs text-slate-400 font-semibold hidden sm:inline">
-          Menampilkan {filteredPromos.length} dari {promos.length} kode
-        </span>
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0" role="group" aria-label="Filter status promo">
+          {(
+            [
+              { id: 'ALL', label: 'Semua', count: promos.length },
+              { id: 'ACTIVE', label: 'Siap Pakai', count: activeCount },
+              { id: 'EXPIRED_OR_EXHAUSTED', label: 'Habis / Lewat', count: issueCount },
+              { id: 'INACTIVE', label: 'Nonaktif', count: inactiveCount },
+            ] as const
+          ).map((tab) => {
+            const isActive = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                aria-pressed={isActive}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#0d1526] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-white text-slate-600 border border-slate-200'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Promos Table */}
@@ -437,7 +480,7 @@ export default function AdminPromosPage() {
                         </div>
                         {isExpired && (
                           <span className="inline-block text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            Kadaluarsa
+                            Kedaluwarsa
                           </span>
                         )}
                       </td>
@@ -458,22 +501,36 @@ export default function AdminPromosPage() {
                         )}
                       </td>
 
-                      {/* Status Aktif */}
+                      {/* Status */}
                       <td className="py-4 px-4 align-top">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(p)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border ${
-                            p.isActive
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${p.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
-                          />
-                          <span>{p.isActive ? 'Aktif' : 'Nonaktif'}</span>
-                        </button>
+                        <div className="space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(p)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                              p.isActive
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+                            }`}
+                            title="Klik untuk ubah aktif / nonaktif"
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${p.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                            />
+                            <span>{p.isActive ? 'Aktif' : 'Nonaktif'}</span>
+                          </button>
+
+                          {p.isActive && isExpired && (
+                            <span className="block text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 w-fit">
+                              Kedaluwarsa
+                            </span>
+                          )}
+                          {p.isActive && !isExpired && isExhausted && (
+                            <span className="block text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 w-fit">
+                              Kuota Habis
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Aksi */}

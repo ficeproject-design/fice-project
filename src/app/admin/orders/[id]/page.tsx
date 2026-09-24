@@ -286,7 +286,7 @@ export default function AdminOrderDetailPage({
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
               Detail Pesanan
             </span>
-            <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] font-mono tracking-tight mt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] font-mono tracking-tight uppercase mt-0.5">
               {order.invoiceNumber}
             </h1>
             <p className="text-sm text-slate-600 mt-1">

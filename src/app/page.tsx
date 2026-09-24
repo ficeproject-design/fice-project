@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Search,
   MapPin,
-  Camera,
   CreditCard,
   Layers,
   ChevronRight,
@@ -23,7 +22,6 @@ import {
   Phone,
   MessageSquare,
   BadgeCheck,
-  Check,
   Calendar,
   Mail,
   Smartphone,
@@ -56,6 +54,17 @@ const SERVICE_IMAGES: Record<string, string> = {
     'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop',
 };
 
+interface HighlightTestimonial {
+  id: string;
+  firstName: string;
+  area: string;
+  services: string[];
+  beforePhoto?: string;
+  afterPhoto?: string;
+  review?: string;
+  completedAt: string;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [trackQuery, setTrackQuery] = useState('');
@@ -63,6 +72,7 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [coverageModalOpen, setCoverageModalOpen] = useState(false);
   const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
+  const [highlightTestimonials, setHighlightTestimonials] = useState<HighlightTestimonial[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -87,6 +97,22 @@ export default function HomePage() {
       setLocationIndex((prev) => (prev + 1) % SWAP_LOCATIONS.length);
     }, 2400);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/testimonials');
+        const data = await res.json();
+        if (data.success) {
+          const all = data.data as HighlightTestimonial[];
+          const withReview = all.filter((t) => t.review);
+          setHighlightTestimonials([...withReview, ...all.filter((t) => !t.review)].slice(0, 3));
+        }
+      } catch {
+        // gagal load, section highlight testimoni disembunyikan
+      }
+    })();
   }, []);
 
   const handleQuickTrack = (e: React.FormEvent) => {
@@ -140,7 +166,7 @@ export default function HomePage() {
 
                 {/* Giant Headline All-Caps matching Sparkles reference */}
                 <div className="my-auto py-3 sm:py-6 space-y-0">
-                  <h1 className="font-heading font-black text-[32px] sm:text-6xl lg:text-[64px] xl:text-[80px] 2xl:text-[92px] leading-[0.88] sm:leading-[0.86] tracking-tight uppercase">
+                  <h1 className="font-heading font-extrabold text-[32px] sm:text-6xl lg:text-[64px] xl:text-[80px] 2xl:text-[92px] leading-[0.88] sm:leading-[0.86] uppercase">
                     <span className="block">CLEANING</span>
                     <span className="block">FOR BUSY</span>
                     <span className="block">PEOPLE IN</span>
@@ -308,7 +334,7 @@ export default function HomePage() {
                 <Sparkles className="w-4 h-4 text-[#f06a60]" />
                 What We Clean • Premium Care Specialist
               </div>
-              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+              <h2 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl uppercase text-[#0d1526]">
                 What We Clean
               </h2>
               <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
@@ -340,7 +366,7 @@ export default function HomePage() {
                                 ? 'Tas'
                                 : 'Topi & Aksesori'}
                           </span>
-                          <h3 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-white uppercase leading-[0.95] tracking-tight">
+                          <h3 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white uppercase leading-[0.95]">
                             {srv.name}
                           </h3>
                           <div className="flex items-center justify-between gap-3 pt-2">
@@ -382,7 +408,7 @@ export default function HomePage() {
               <span className="text-xs sm:text-sm font-heading font-bold uppercase tracking-wider bg-[#f2ece5] text-[#f06a60] border border-[#f06a60]/20 px-4 py-1.5 rounded-full">
                 Super Easy &amp; Hassle-Free
               </span>
-              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+              <h2 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl uppercase text-[#0d1526]">
                 How It Works
               </h2>
               <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed">
@@ -442,89 +468,94 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION QC SHOWCASE */}
-        <section id="tentang" className="py-20 sm:py-24 bg-[#fdf8f1]">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+        {/* SECTION TESTIMONIAL HIGHLIGHT (data real dari /api/testimonials) */}
+        {highlightTestimonials.length > 0 && (
+        <section className="py-20 sm:py-24 bg-[#fdf8f1]">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="bg-[#000000] rounded-[32px] sm:rounded-[40px] text-white p-8 sm:p-14 lg:p-16 overflow-hidden relative shadow-2xl">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-                <div className="lg:col-span-5 space-y-6">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10 lg:mb-12">
+                <div className="space-y-5 max-w-2xl">
                   <div className="inline-flex items-center gap-2 bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold uppercase px-4 py-1.5 rounded-full">
-                    <Camera className="w-4 h-4" />
-                    100% Transparency Guarantee
+                    <Star className="w-4 h-4 fill-white" />
+                    Testimoni Pelanggan
                   </div>
-                  <h2 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight text-white leading-tight">
-                    Every Shoe Gets Photo-QC&apos;d (Before &amp; After)
+                  <h2 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-6xl uppercase text-white leading-tight">
+                    Kata Mereka yang Sudah Coba
                   </h2>
-                  <p className="text-sm sm:text-base text-neutral-300 leading-relaxed max-w-xl">
-                    Tenang! Saat sepatu Anda tiba di workshop kami, kurir dan teknisi kami memotret kondisi awal (sol, upper, tali) dan mencatat goresan yang sudah ada sebelumnya. Anda bisa melihat fotonya langsung di halaman tracking pesanan Anda.
+                  <p className="text-sm sm:text-base text-neutral-300 leading-relaxed">
+                    Hasil before-after asli dari workshop kami beserta ulasan pelanggan.
                   </p>
-
-                  <div className="space-y-3 text-xs sm:text-sm text-neutral-300 pt-2">
-                    <div className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Mencegah sengketa terhadap kerusakan yang sudah ada sebelumnya.</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Lihat sendiri perbandingan before vs. after-nya.</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-[#f06a60] shrink-0" />
-                      <span>Invoice resmi otomatis dibuat — bisa dicetak atau dibagikan via WhatsApp.</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4">
-                    <Link
-                      href="/order"
-                       className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-base sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-8 sm:px-10 py-4 sm:py-4.5 rounded-2xl transition-all duration-300 ease-out shadow-md hover:shadow-lg active:scale-95 overflow-hidden"
-                    >
-                      <span className="transition-colors duration-300">Try Our Service</span>
-                      <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
-                        <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                      </span>
-                    </Link>
-                  </div>
                 </div>
+                <Link
+                  href="/testimoni"
+                  className="group inline-flex items-center gap-2 text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal shrink-0"
+                >
+                  <span className="border-b-2 border-[#f06a60] pb-1 group-hover:text-[#f06a60] transition-colors">
+                    Lihat Semua Testimoni
+                  </span>
+                  <ArrowRight className="w-5 h-5 text-[#f06a60] group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
 
-                {/* Visual Before & After Mock (Side-by-side Kiri Kanan, Scaled Up) */}
-                <div className="lg:col-span-7 grid grid-cols-2 gap-4 sm:gap-6 lg:gap-7">
-                  <div className="bg-neutral-900 p-4 sm:p-5 lg:p-6 rounded-[28px] sm:rounded-[36px] border border-neutral-800 space-y-3 sm:space-y-4">
-                    <div className="relative h-72 sm:h-96 md:h-[420px] lg:h-[480px] xl:h-[520px] rounded-[20px] sm:rounded-[26px] overflow-hidden bg-neutral-800">
-                      <img
-                        src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=1000&auto=format&fit=crop&q=85"
-                        alt="Before"
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute top-4 left-4 bg-[#000000]/90 backdrop-blur-md text-amber-400 text-xs sm:text-sm font-heading font-bold px-4 py-2 rounded-xl border border-amber-400/30 uppercase tracking-wide shadow-md">
-                        Initial Condition (Before)
-                      </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                {highlightTestimonials.map((t) => (
+                  <article
+                    key={t.id}
+                    className="bg-neutral-900 rounded-[28px] border border-neutral-800 overflow-hidden flex flex-col"
+                  >
+                    <div className="grid grid-cols-2 gap-0.5 p-3 pb-0">
+                      <figure className="relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-neutral-800">
+                        {t.beforePhoto && (
+                          <img
+                            src={t.beforePhoto}
+                            alt={`Kondisi awal ${t.firstName}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                        <figcaption className="absolute top-2.5 left-2.5 bg-black/80 text-amber-300 text-[10px] font-heading font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                          Before
+                        </figcaption>
+                      </figure>
+                      <figure className="relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-neutral-800">
+                        {t.afterPhoto && (
+                          <img
+                            src={t.afterPhoto}
+                            alt={`Hasil akhir ${t.firstName}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                        <figcaption className="absolute top-2.5 right-2.5 bg-[#f06a60] text-white text-[10px] font-heading font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                          After
+                        </figcaption>
+                      </figure>
                     </div>
-                    <p className="text-xs sm:text-sm lg:text-base text-neutral-400 italic px-1">
-                      Debu dan kotoran tebal di midsole &amp; outsole.
-                    </p>
-                  </div>
-
-                  <div className="bg-neutral-900 p-4 sm:p-5 lg:p-6 rounded-[28px] sm:rounded-[36px] border border-neutral-800 space-y-3 sm:space-y-4">
-                    <div className="relative h-72 sm:h-96 md:h-[420px] lg:h-[480px] xl:h-[520px] rounded-[20px] sm:rounded-[26px] overflow-hidden bg-neutral-800">
-                      <img
-                        src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&auto=format&fit=crop&q=85"
-                        alt="After"
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute top-4 left-4 bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold px-4 py-2 rounded-xl uppercase tracking-wide shadow-md">
-                        Cleaned (After)
-                      </span>
+                    <div className="p-5 sm:p-6 pt-4 space-y-3 flex-1 flex flex-col">
+                      {t.review && (
+                        <blockquote className="text-xs sm:text-sm text-neutral-200 leading-relaxed border-l-2 border-[#f06a60] pl-3 line-clamp-4">
+                          &ldquo;{t.review}&rdquo;
+                        </blockquote>
+                      )}
+                      <div className="mt-auto pt-1">
+                        <p className="text-sm font-bold text-white">
+                          {t.firstName}{' '}
+                          <span className="font-normal text-neutral-400">· {t.area}</span>
+                        </p>
+                        {t.services.length > 0 && (
+                          <p className="text-[11px] text-neutral-500 mt-1 line-clamp-1">
+                            {t.services.slice(0, 2).join(' · ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs sm:text-sm lg:text-base text-neutral-200 font-semibold px-1">
-                      Kering sempurna, aroma segar, dan higienis bersih!
-                    </p>
-                  </div>
-                </div>
+                  </article>
+                ))}
               </div>
             </div>
           </div>
         </section>
+        )}
 
         {/* SECTION: KENAPA HARUS MERAWAT SEPATU */}
         <section className="py-20 sm:py-24 bg-[#fdf8f1] border-t border-black/[0.05]">
@@ -558,7 +589,7 @@ export default function HomePage() {
                     <ShieldCheck className="w-4 h-4 text-[#f06a60]" />
                     Why It Matters
                   </div>
-                  <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+                  <h2 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl uppercase text-[#0d1526]">
                     Why Should You Care for Your Shoes?
                   </h2>
                   <p className="text-sm sm:text-base text-neutral-600 leading-relaxed font-body">
@@ -616,7 +647,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div className="text-center space-y-3">
               <span className="text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#f06a60]">FAQ</span>
-              <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526]">
+              <h2 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl uppercase text-[#0d1526]">
                 Frequently Asked Questions
               </h2>
               <p className="text-sm sm:text-base text-neutral-600">
@@ -628,7 +659,7 @@ export default function HomePage() {
               {[
                 {
                   q: 'Is the pickup & delivery really 100% free?',
-                  a: 'Ya! Dalam radius 20 km dari workshop kami di Bintaro (Tangerang Selatan), jemput antar gratis berlaku tanpa minimum order (bahkan 1 pasang pun gratis). Di luar 20 km (masih dalam Jaksel, Tangsel, dan Tangerang), jemput antar gratis dengan minimum 3 pasang/barang.',
+                  a: 'Ya! Dalam radius 15 km (estimasi jarak jalan) dari workshop kami di Bintaro (Tangerang Selatan), jemput antar gratis berlaku tanpa minimum order (bahkan 1 pasang pun gratis). Di luar 15 km (masih dalam Jaksel, Tangsel, dan Tangerang), jemput antar gratis dengan minimum 3 pasang/barang.',
                 },
                 {
                   q: 'Which areas are covered for free pickup & delivery?',
@@ -755,7 +786,7 @@ export default function HomePage() {
 
                 <div className="p-4 bg-[#f2ece5] rounded-2xl text-xs text-neutral-600 font-body">
                   <strong className="text-[#0d1526] block mb-1">Syarat Gratis Pengiriman:</strong>
-                  Dalam radius 20 km dari workshop Bintaro kami — tanpa minimum order (bahkan 1 pasang pun gratis!). Di luar 20 km — gratis dengan minimum 3 pasang/barang.
+                  Dalam radius 15 km (estimasi jarak jalan) dari workshop Bintaro kami — tanpa minimum order (bahkan 1 pasang pun gratis!). Di luar 15 km — gratis dengan minimum 3 pasang/barang.
                 </div>
 
                 <div className="pt-1">

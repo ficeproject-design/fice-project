@@ -1,5 +1,9 @@
 // Utility for calculating geographical distance using the Haversine formula
-// and validating business rules (radius 20 km, coverage area, cut-off time).
+// and validating business rules (radius 15 km jalan, coverage area, cut-off time).
+
+// Faktor koreksi garis lurus -> estimasi jarak jalan raya (dalam kota 1,2-1,5x).
+// Dipakai agar threshold radius terasa adil dibanding Google Maps.
+export const ROAD_DISTANCE_FACTOR = 1.3;
 
 export const COVERAGE_AREAS = {
   'Kota Tangerang Selatan': [
@@ -48,6 +52,13 @@ export const DEFAULT_WORKSHOP_COORDS = {
   address: 'Pondok Aren, Tangerang Selatan',
 };
 
+// Batas viewport peta: fokus ke area layanan saja
+// (Tangsel, Kota Tangerang, Jaksel). Di luar ini user tak bisa pan/zoom-out.
+export const SERVICE_BOUNDS = {
+  southWest: [-6.45, 106.55] as [number, number],
+  northEast: [-6.1, 106.95] as [number, number],
+};
+
 /**
  * Calculates straight-line distance in kilometers between two latitude/longitude points.
  */
@@ -75,6 +86,16 @@ function toRad(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }
 
+/** Estimasi jarak jalan raya = haversine x faktor koreksi (1 desimal). */
+export function estimateRoadDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  return Math.round(calculateDistanceKm(lat1, lon1, lat2, lon2) * ROAD_DISTANCE_FACTOR * 10) / 10;
+}
+
 export interface EligibilityResult {
   allowed: boolean;
   distanceKm: number;
@@ -86,8 +107,9 @@ export interface EligibilityResult {
 
 /**
  * Evaluates whether an order meets the Free Pickup & Delivery conditions.
- * - Radius <= 20 km: FREE for any number of items (1, 2, 3+)
- * - Radius > 20 km (in coverage zone): FREE with minimum 3 items. If < 3, requires adding more items.
+ * Jarak = estimasi jalan raya (haversine x faktor koreksi).
+ * - Radius <= 15 km: FREE for any number of items (1, 2, 3+)
+ * - Radius > 15 km (in coverage zone): FREE with minimum 3 items. If < 3, requires adding more items.
  */
 export function checkOrderEligibility(
   customerLat: number,
@@ -95,10 +117,10 @@ export function checkOrderEligibility(
   totalItemsCount: number,
   workshopLat: number = DEFAULT_WORKSHOP_COORDS.lat,
   workshopLng: number = DEFAULT_WORKSHOP_COORDS.lng,
-  freeRadiusKm: number = 20,
+  freeRadiusKm: number = 15,
   minItemsBeyondRadius: number = 3
 ): EligibilityResult {
-  const distanceKm = calculateDistanceKm(
+  const distanceKm = estimateRoadDistanceKm(
     workshopLat,
     workshopLng,
     customerLat,
@@ -129,7 +151,7 @@ export function checkOrderEligibility(
     };
   }
 
-  // <= 20 km: Free for any quantity
+  // <= radius: Free for any quantity
   return {
     allowed: true,
     distanceKm,

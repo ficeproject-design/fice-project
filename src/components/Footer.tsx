@@ -30,9 +30,9 @@ export default function Footer() {
   return (
     <>
       {/* CTA Section — above footer */}
-      <section className="px-4 sm:px-6 lg:px-8 xl:px-10 pb-10">
+      <section className="px-4 sm:px-6 lg:px-8 xl:px-10 pb-4">
         <div className="bg-[#f06a60] rounded-3xl px-8 py-20 sm:px-16 sm:py-28 text-center">
-          <h2 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white tracking-tight leading-[0.95] max-w-3xl mx-auto">
+          <h2 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white uppercase leading-[0.95] max-w-3xl mx-auto">
             Ready for Your Next Pair?
           </h2>
           <p className="text-sm sm:text-base text-white/80 mt-5 max-w-lg mx-auto leading-relaxed">
@@ -56,7 +56,7 @@ export default function Footer() {
       </section>
 
       <footer className="bg-[#fdf8f1] mt-auto">
-      <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-12 pb-6">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-4 pb-6">
         {/* Rounded container with 3 columns + giant brand name */}
         <div className="bg-[#f2ece5] rounded-3xl p-8 sm:p-10 lg:p-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
@@ -144,7 +144,7 @@ export default function Footer() {
           {/* Giant brand name inside the card */}
           <div className="mt-10 pt-8 border-t border-black/[0.06] overflow-hidden">
               <h2
-                className="text-[11vw] sm:text-[10vw] md:text-[9.5vw] leading-[0.85] text-[#000000] tracking-tight select-none text-center whitespace-nowrap"
+                className="text-[11vw] sm:text-[10vw] md:text-[9.5vw] leading-[0.85] text-[#000000] tracking-tight uppercase select-none text-center whitespace-nowrap"
                 style={{ fontFamily: "'Bugaki', sans-serif", fontStyle: 'normal' }}
               >
                 Fice Shoescare<span className="text-[#f06a60]">.</span>

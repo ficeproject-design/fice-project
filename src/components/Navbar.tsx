@@ -96,7 +96,7 @@ export default function Navbar() {
               Testimonials
             </Link>
             <Link
-              href="/#cara-kerja"
+              href="/cara-kerja"
               className="hover:text-[#f06a60] transition-colors leading-none"
             >
               How It Works
@@ -157,49 +157,49 @@ export default function Navbar() {
 
                   <div className="flex flex-col space-y-2.5">
                     <Link
-                      href="/harga"
+                      href="/harga/srv-shoes-deepclean"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Deep Clean Shoes
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-shoes-suede"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Special Treatment Suede
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-shoes-leather"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Special Treatment Leather
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-shoes-kids"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Little One Care (Kids Shoes)
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-shoes-womens"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Womens Care (Heels &amp; Flats)
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-bag-medium"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
                       Bag Deep Clean
                     </Link>
                     <Link
-                      href="/harga"
+                      href="/harga/srv-acc-deepclean"
                       onClick={() => setServicesOpen(false)}
                       className="text-xl sm:text-2xl font-body font-bold tracking-tight text-[#000000] hover:text-[#f06a60] transition-colors"
                     >
@@ -310,7 +310,7 @@ export default function Navbar() {
               Testimonials
             </Link>
             <Link
-              href="/#cara-kerja"
+              href="/cara-kerja"
               onClick={() => setMobileMenuOpen(false)}
               className="px-4 py-2.5 rounded-2xl hover:bg-[#f2ece5]"
             >

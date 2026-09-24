@@ -2,7 +2,7 @@
 // db.ts (butuh file) dan validatePromoCode (butuh db) tercakup lewat alur manual admin.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateDistanceKm, checkOrderEligibility, DEFAULT_WORKSHOP_COORDS } from './haversine.ts';
+import { calculateDistanceKm, checkOrderEligibility, estimateRoadDistanceKm, DEFAULT_WORKSHOP_COORDS } from './haversine.ts';
 import { isValidPhone, cleanPhoneDigits, normalizeIdPhone } from './phone.ts';
 import { generateInvoiceNumber, formatRupiah, createWhatsAppUrl } from './invoice.ts';
 
@@ -13,17 +13,23 @@ test('jarak haversine kemang -> workshop masuk akal (~11 km)', () => {
   assert.ok(d > 8 && d < 15, `dapat ${d} km`);
 });
 
-test('eligibilitas: dalam radius bebas berapa pun item; >radius butuh min 3', () => {
-  const dekat = checkOrderEligibility(W.lat, W.lng + 0.05, 1, W.lat, W.lng, 20, 3);
+test('estimasi jalan = 1.3x garis lurus; kemang ~11 garis lurus -> ~14 jalan', () => {
+  const straight = calculateDistanceKm(W.lat, W.lng, -6.2625, 106.8228);
+  const road = estimateRoadDistanceKm(W.lat, W.lng, -6.2625, 106.8228);
+  assert.ok(Math.abs(road - straight * 1.3) < 0.2, `jalan ${road} vs lurus ${straight}`);
+});
+
+test('eligibilitas radius 15 jalan: dalam radius bebas; >radius butuh min 3', () => {
+  const dekat = checkOrderEligibility(W.lat, W.lng + 0.05, 1, W.lat, W.lng, 15, 3);
   assert.equal(dekat.allowed, true);
   assert.equal(dekat.isBeyondRadius, false);
 
-  const jauh = checkOrderEligibility(W.lat + 0.25, W.lng, 2, W.lat, W.lng, 20, 3);
+  const jauh = checkOrderEligibility(W.lat + 0.25, W.lng, 2, W.lat, W.lng, 15, 3);
   assert.equal(jauh.allowed, false);
   assert.equal(jauh.isBeyondRadius, true);
   assert.equal(jauh.missingItemsCount, 1);
 
-  const jauhCukup = checkOrderEligibility(W.lat + 0.25, W.lng, 3, W.lat, W.lng, 20, 3);
+  const jauhCukup = checkOrderEligibility(W.lat + 0.25, W.lng, 3, W.lat, W.lng, 15, 3);
   assert.equal(jauhCukup.allowed, true);
 });
 

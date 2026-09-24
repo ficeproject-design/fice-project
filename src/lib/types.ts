@@ -5,6 +5,7 @@ export interface Service {
   category: ServiceCategory;
   name: string;
   description: string;
+  longDescription?: string; // Deskripsi panjang untuk section detail layanan
   estimatedDays: string;
   price: number;
   icon?: string;
@@ -113,7 +114,7 @@ export interface SystemSettings {
   workshopLat: number;
   workshopLng: number;
   adminPhone: string; // WhatsApp number
-  freeRadiusKm: number; // default: 20
+  freeRadiusKm: number; // default: 15 (estimasi jarak jalan)
   minItemsBeyondRadius: number; // default: 3
   cutoffHour: number; // default: 13
   qrisImageUrl?: string;

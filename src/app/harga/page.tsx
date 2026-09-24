@@ -13,7 +13,7 @@ export default function HargaPage() {
       <main className="flex-1">
         <section className="pt-14 sm:pt-20 pb-8">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-            <h1 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight text-[#0d1526] leading-[0.95]">
+            <h1 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl uppercase text-[#0d1526] leading-[0.95]">
               Service Pricing
             </h1>
             <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mt-3 leading-relaxed">

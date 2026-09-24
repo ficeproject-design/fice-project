@@ -124,6 +124,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   letter-spacing: -0.02em;
 }
 
+/* Uppercase display type: neutral tracking, biar tidak dempet & terlihat bongsor */
+.font-heading.uppercase,
+h1.uppercase, h2.uppercase, h3.uppercase,
+h4.uppercase, h5.uppercase, h6.uppercase {
+  letter-spacing: 0;
+}
+
 /* Sparkles marquee continuous loop */
 @keyframes marquee {
   0% {

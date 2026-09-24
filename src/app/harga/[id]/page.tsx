@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Plus,
   Minus,
+  FileText,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/invoice';
 import { readCart, writeCart } from '@/lib/cart';
@@ -162,7 +163,7 @@ export default function ServiceDetailPage() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <AlertCircle className="w-10 h-10 text-rose-300 mx-auto" />
-            <h1 className="font-heading font-black text-2xl text-[#0d1526]">Layanan Tidak Ditemukan</h1>
+            <h1 className="font-heading font-extrabold text-2xl text-[#0d1526] uppercase">Layanan Tidak Ditemukan</h1>
             <p className="text-sm text-neutral-500">Layanan yang Anda cari tidak tersedia.</p>
             <Link
               href="/harga"
@@ -231,7 +232,7 @@ export default function ServiceDetailPage() {
                 </div>
 
                 {/* Name */}
-                <h1 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl tracking-tight text-[#0d1526] leading-tight">
+                <h1 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl uppercase text-[#0d1526] leading-tight">
                   {service.name}
                 </h1>
 
@@ -318,6 +319,24 @@ export default function ServiceDetailPage() {
           </div>
         </section>
 
+        {/* DESKRIPSI LAYANAN */}
+        <section className="py-12 sm:py-16 bg-[#fdf8f1] border-t border-black/[0.06]">
+          <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="max-w-3xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#edeaf6] text-xs sm:text-sm font-heading font-bold uppercase tracking-wider text-[#3b3a7a] border border-[#b8b4e8]/40">
+                <FileText className="w-4 h-4 text-[#f06a60]" />
+                Deskripsi Layanan
+              </div>
+              <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl uppercase text-[#0d1526]">
+                Tentang {service.name}
+              </h2>
+              <p className="text-base sm:text-lg text-neutral-600 leading-relaxed font-body">
+                {service.longDescription || service.description}
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* WHAT'S INCLUDED */}
         <section className="py-12 sm:py-16 bg-white border-t border-black/[0.06]">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
@@ -327,7 +346,7 @@ export default function ServiceDetailPage() {
                   <Sparkles className="w-4 h-4 text-[#f06a60]" />
                   Yang Anda Dapatkan
                 </div>
-                <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl tracking-tight text-[#0d1526]">
+                <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl uppercase text-[#0d1526]">
                   Apa Saja yang Termasuk?
                 </h2>
                 <ul className="space-y-3">
@@ -345,7 +364,7 @@ export default function ServiceDetailPage() {
                   <ShieldCheck className="w-4 h-4 text-[#f06a60]" />
                   Proses Kerja
                 </div>
-                <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl tracking-tight text-[#0d1526]">
+                <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl uppercase text-[#0d1526]">
                   Bagaimana Prosesnya?
                 </h2>
                 <div className="space-y-4">
@@ -376,7 +395,7 @@ export default function ServiceDetailPage() {
           <section className="py-12 sm:py-16 bg-[#fdf8f1] border-t border-black/[0.06]">
             <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
               <div className="space-y-3 mb-8">
-                <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl tracking-tight text-[#0d1526]">
+                <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl uppercase text-[#0d1526]">
                   Layanan Sejenis
                 </h2>
                 <p className="text-sm text-neutral-500">

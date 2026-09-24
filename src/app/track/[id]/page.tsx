@@ -17,6 +17,8 @@ import {
   Printer,
   Share2,
   CheckCircle2,
+  Check,
+  Copy,
   Camera,
   AlertCircle,
   Sparkles,
@@ -80,6 +82,23 @@ export default function OrderDetailPage({
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyInvoice = async () => {
+    if (!order) return;
+    try {
+      await navigator.clipboard.writeText(order.invoiceNumber);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = order.invoiceNumber;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     async function fetchOrder() {
@@ -168,6 +187,13 @@ export default function OrderDetailPage({
                   <p className="text-xs text-neutral-300">
                     Our courier will contact you shortly via WhatsApp for pickup confirmation.
                   </p>
+                  <p className="text-xs text-neutral-300">
+                    Simpan nomor invoice{' '}
+                    <span className="font-mono font-bold text-white">
+                      {order?.invoiceNumber}
+                    </span>{' '}
+                    ini. Nomor resi ini dipakai untuk tracking status kapan saja.
+                  </p>
                 </div>
               </div>
               <a
@@ -192,8 +218,29 @@ export default function OrderDetailPage({
                 <span className="font-heading font-bold text-xl sm:text-2xl text-[#000000] font-mono">
                   {order.invoiceNumber}
                 </span>
+                <button
+                  type="button"
+                  onClick={handleCopyInvoice}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-black/10 hover:bg-[#f2ece5] text-[#000000] text-xs font-bold transition-all"
+                  title="Salin nomor invoice"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      Salin
+                    </>
+                  )}
+                </button>
                 <OrderStatusBadge status={order.status} />
               </div>
+              <p className="text-xs text-neutral-500">
+                Simpan nomor invoice ini. Nomor resi ini dipakai untuk tracking status kapan saja.
+              </p>
               <p className="text-xs text-neutral-500">
                 Created on:{' '}
                 {new Date(order.createdAt).toLocaleDateString('id-ID', {

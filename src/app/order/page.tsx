@@ -329,7 +329,7 @@ export default function OrderPage() {
                 <Truck className="w-3.5 h-3.5" />
                 100% Free Pickup & Delivery
               </div>
-              <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#0d1526] tracking-tight">
+              <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#0d1526] tracking-tight uppercase">
                 Pickup & Delivery Order
               </h1>
               <p className="text-xs sm:text-sm text-neutral-600 mt-1">
@@ -417,7 +417,7 @@ export default function OrderPage() {
             <div className="space-y-6">
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
-                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight uppercase">
                     Your Selected Items Summary
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
@@ -486,7 +486,7 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                    <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight uppercase">
                       Select Items to Clean
                     </h2>
                     <p className="text-xs text-neutral-500 mt-0.5">
@@ -654,7 +654,7 @@ export default function OrderPage() {
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                    <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight uppercase">
                     Address & Pickup Location
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
@@ -662,7 +662,7 @@ export default function OrderPage() {
                     </p>
                   </div>
                   <span className="text-xs font-bold px-3.5 py-1 rounded-full bg-[#f06a60]/10 text-[#f06a60] border border-[#f06a60]/30 w-fit">
-                    Radius 20 km Free
+                    Radius 15 km Free
                   </span>
                 </div>
 
@@ -831,7 +831,7 @@ export default function OrderPage() {
             <div className="space-y-6">
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
-                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight uppercase">
                     Select Pickup Day & Time Slot
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
@@ -967,7 +967,7 @@ export default function OrderPage() {
             <div className="space-y-6">
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/[0.08] shadow-sm space-y-6">
                 <div className="border-b border-black/[0.06] pb-4">
-                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight">
+                  <h2 className="font-heading font-bold text-[#0d1526] text-xl sm:text-2xl tracking-tight uppercase">
                     Payment
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">

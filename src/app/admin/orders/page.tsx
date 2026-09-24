@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Search,
   CheckCircle2,
@@ -17,11 +17,12 @@ import {
 import { Order } from '@/lib/types';
 import { OrderStatusBadge } from '@/components/StatusBadge';
 
-export default function AdminOrdersPage() {
+function AdminOrdersContent({ initialQ }: { initialQ: string }) {
   const router = useRouter();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQ);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Fetch orders
@@ -62,7 +63,7 @@ export default function AdminOrdersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0d1526] tracking-tight uppercase">
             Manajemen Antrean &amp; Order
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -344,5 +345,26 @@ export default function AdminOrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function AdminOrdersWrapper() {
+  const searchParams = useSearchParams();
+  const q = searchParams.get('q') || '';
+  return <AdminOrdersContent key={q} initialQ={q} />;
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-24 text-center text-slate-400 text-xs space-y-2">
+          <RefreshCw className="w-5 h-5 animate-spin mx-auto text-[#f06a60]" />
+          <p>Memuat antrean pesanan...</p>
+        </div>
+      }
+    >
+      <AdminOrdersWrapper />
+    </Suspense>
   );
 }

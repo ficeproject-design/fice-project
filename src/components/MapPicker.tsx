@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap, Marker as LeafletMarker, LeafletMouseEvent } from 'leaflet';
 import { MapPin, Navigation, Search, Check, AlertCircle, Info } from 'lucide-react';
-import { calculateDistanceKm, DEFAULT_WORKSHOP_COORDS } from '@/lib/haversine';
+import { estimateRoadDistanceKm, ROAD_DISTANCE_FACTOR, DEFAULT_WORKSHOP_COORDS, SERVICE_BOUNDS } from '@/lib/haversine';
 
 interface MapPickerProps {
   initialLat?: number;
@@ -21,7 +21,7 @@ export default function MapPicker({
   onLocationChange,
   workshopLat = DEFAULT_WORKSHOP_COORDS.lat,
   workshopLng = DEFAULT_WORKSHOP_COORDS.lng,
-  freeRadiusKm = 20,
+  freeRadiusKm = 15,
 }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
@@ -32,7 +32,7 @@ export default function MapPicker({
     lng: initialLng,
   });
   const [distanceKm, setDistanceKm] = useState<number>(() =>
-    calculateDistanceKm(workshopLat, workshopLng, initialLat, initialLng)
+    estimateRoadDistanceKm(workshopLat, workshopLng, initialLat, initialLng)
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -42,7 +42,7 @@ export default function MapPicker({
   const handleUpdatePosition = (lat: number, lng: number) => {
     const roundedLat = Math.round(lat * 10000) / 10000;
     const roundedLng = Math.round(lng * 10000) / 10000;
-    const dist = calculateDistanceKm(workshopLat, workshopLng, roundedLat, roundedLng);
+    const dist = estimateRoadDistanceKm(workshopLat, workshopLng, roundedLat, roundedLng);
     setCustomerPos({ lat: roundedLat, lng: roundedLng });
     setDistanceKm(dist);
     onLocationChange(roundedLat, roundedLng, dist);
@@ -61,11 +61,15 @@ export default function MapPicker({
         mapInstanceRef.current.remove();
       }
 
-      const map = L.map(mapContainerRef.current).setView(
-        [customerPos.lat, customerPos.lng],
-        12
-      );
+      const serviceBounds = L.latLngBounds(SERVICE_BOUNDS.southWest, SERVICE_BOUNDS.northEast);
+      const map = L.map(mapContainerRef.current, {
+        minZoom: 11,
+        maxBounds: serviceBounds,
+        maxBoundsViscosity: 1.0,
+      }).setView([customerPos.lat, customerPos.lng], 12);
       mapInstanceRef.current = map;
+      // Fokus awal ke area layanan (Tangsel, Kota Tangerang, Jaksel)
+      map.fitBounds(serviceBounds, { padding: [20, 20] });
 
       // CartoDB Positron / OSM tiles matching warm style
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -93,15 +97,17 @@ export default function MapPicker({
         iconAnchor: [19, 38],
       });
 
-      // Add Workshop Marker & 20km Free Radius Circle
+      // Add Workshop Marker & Free Radius Circle (radius = estimasi jalan)
       L.marker([workshopLat, workshopLng], { icon: workshopIcon })
         .addTo(map)
         .bindPopup(
           `<strong>Workshop Fice Shoes Care</strong><br/>${DEFAULT_WORKSHOP_COORDS.address}`
         );
 
+      // Lingkaran digambar di radius garis-lurus yang setara (radius jalan / faktor),
+      // supaya batas visual cocok dengan aturan eligibilitas (estimasi jalan).
       L.circle([workshopLat, workshopLng], {
-        radius: freeRadiusKm * 1000,
+        radius: (freeRadiusKm / ROAD_DISTANCE_FACTOR) * 1000,
         color: '#f06a60',
         weight: 2,
         fillColor: '#f06a60',
@@ -283,11 +289,11 @@ export default function MapPicker({
         <div>
           {isWithinRadius ? (
             <p>
-              <strong>Jarak {distanceKm} km (Dalam Radius 20 km):</strong> Anda berhak mendapatkan layanan <strong>100% Free Antar-Jemput</strong> untuk berapapun jumlah sepatu/tas yang dicuci!
+              <strong>Jarak {distanceKm} km (Dalam Radius {freeRadiusKm} km):</strong> Anda berhak mendapatkan layanan <strong>100% Free Antar-Jemput</strong> untuk berapapun jumlah sepatu/tas yang dicuci!
             </p>
           ) : (
             <p>
-              <strong>Jarak {distanceKm} km (Di atas Radius 20 km):</strong> Layanan Free Antar-Jemput tetap berlaku dengan syarat <strong>minimal 3 item</strong> di keranjang pesanan.
+              <strong>Jarak {distanceKm} km (Di atas Radius {freeRadiusKm} km):</strong> Layanan Free Antar-Jemput tetap berlaku dengan syarat <strong>minimal 3 item</strong> di keranjang pesanan.
             </p>
           )}
           <p className="text-[11px] opacity-75 mt-1">
