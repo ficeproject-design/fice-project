@@ -1,32 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrdersByPhone } from '@/lib/db';
 import { isValidPhone, PHONE_HINT } from '@/lib/phone';
+import { clientIp, createRateLimiter } from '@/lib/rate-limit';
 
-// Sliding-window limiter (per process): 30 lookups / 5 min / IP.
+// 30 lookups / 5 menit / IP.
 // Menaikkan biaya enumerasi nomor HP (tracking publik = capability terbuka).
-const LOOKUP_WINDOW_MS = 5 * 60 * 1000;
-const LOOKUP_MAX = 30;
-const lookupHits = new Map<string, number[]>();
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const hits = (lookupHits.get(key) || []).filter((t) => now - t < LOOKUP_WINDOW_MS);
-  if (hits.length >= LOOKUP_MAX) {
-    lookupHits.set(key, hits);
-    return true;
-  }
-  hits.push(now);
-  lookupHits.set(key, hits);
-  return false;
-}
+const lookupLimiter = createRateLimiter(30, 5 * 60 * 1000);
 
 export async function GET(req: NextRequest) {
   try {
-    const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
-    if (isRateLimited(`by-phone:${ip}`)) {
+    if (lookupLimiter.limited(`by-phone:${clientIp(req.headers)}`)) {
       return NextResponse.json(
         { success: false, error: 'Terlalu banyak percobaan. Coba lagi beberapa menit.' },
         { status: 429 }
@@ -50,7 +33,19 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: orders });
+    // Ringkasan saja: nomor HP bukan rahasia, jadi alamat/koordinat tidak ikut.
+    // Detail lengkap hanya lewat nomor invoice (capability).
+    const summary = orders.map((o) => ({
+      id: o.id,
+      invoiceNumber: o.invoiceNumber,
+      status: o.status,
+      createdAt: o.createdAt,
+      pickupDate: o.pickupDate,
+      itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
+      totalAmount: o.totalAmount,
+    }));
+
+    return NextResponse.json({ success: true, data: summary });
   } catch (error) {
     console.error('Error phone lookup:', error);
     return NextResponse.json(

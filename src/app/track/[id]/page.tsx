@@ -21,16 +21,13 @@ import {
   Copy,
   Camera,
   AlertCircle,
-  Sparkles,
-  Phone,
   ArrowLeft,
-  Building2,
-  Clock,
   ExternalLink,
   Tag,
 } from 'lucide-react';
-import { Order, OrderStatus } from '@/lib/types';
+import { Order, OrderStatus, SystemSettings } from '@/lib/types';
 import { formatRupiah, createWhatsAppUrl } from '@/lib/invoice';
+import { googleMapsUrl } from '@/lib/maps';
 
 const STATUS_STEPS: Array<{ key: OrderStatus; label: string; desc: string }> = [
   {
@@ -80,6 +77,7 @@ export default function OrderDetailPage({
   const justOrdered = searchParams.get('just_ordered') === 'true';
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -103,13 +101,18 @@ export default function OrderDetailPage({
   useEffect(() => {
     async function fetchOrder() {
       try {
-        const res = await fetch(`/api/orders/${resolvedParams.id}`);
+        const [res, settingsRes] = await Promise.all([
+          fetch(`/api/orders/${resolvedParams.id}`),
+          fetch('/api/settings'),
+        ]);
         const data = await res.json();
         if (data.success) {
           setOrder(data.data);
         } else {
           setError(data.error || 'Order not found');
         }
+        const settingsData = await settingsRes.json().catch(() => null);
+        if (settingsData?.success) setSettings(settingsData.data);
       } catch (err) {
         console.error('Error fetching order:', err);
         setError('Failed to load order information.');
@@ -165,7 +168,7 @@ export default function OrderDetailPage({
   const afterPhotos = order.qcPhotos.filter((p) => p.type === 'AFTER');
 
   const waShareText = `Halo kak kurir/admin Fice Shoes Care, ini pesanan saya nomor *${order.invoiceNumber}* atas nama *${order.customer.name}*. Saya ingin menanyakan status penjemputan/pengantaran. Terima kasih! Link: ${typeof window !== 'undefined' ? window.location.href : ''}`;
-  const waShareUrl = createWhatsAppUrl('08161885553', waShareText);
+  const waShareUrl = createWhatsAppUrl(settings?.adminPhone || '', waShareText);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fdf8f1] text-[#000000]">
@@ -533,11 +536,11 @@ export default function OrderDetailPage({
                         </p>
                       )}
                       <a
-                        href={
-                          order.customer.latitude && order.customer.longitude
-                            ? `https://www.google.com/maps/search/?api=1&query=${order.customer.latitude},${order.customer.longitude}`
-                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.customer.address}, ${order.customer.city}`)}`
-                        }
+                        href={googleMapsUrl(
+                          order.customer.latitude,
+                          order.customer.longitude,
+                          `${order.customer.address}, ${order.customer.city}`
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-[#f06a60] hover:text-[#d4534a] bg-[#f06a60]/10 hover:bg-[#f06a60]/20 px-3 py-1 rounded-full transition-colors mt-2 w-fit border border-[#f06a60]/20"
@@ -554,7 +557,7 @@ export default function OrderDetailPage({
                     <div>
                       <strong className="block text-slate-900">Payment Method:</strong>
                       <p className="text-xs text-neutral-600 mt-0.5">
-                        Transfer Bank BCA. Invoice issued after shoes are verified at workshop.
+                        Transfer bank. Invoice issued after shoes are verified at workshop.
                       </p>
                     </div>
                   </div>
@@ -575,11 +578,9 @@ export default function OrderDetailPage({
                     Transfer ke rekening resmi Fice Shoes Care di bawah ini. Konfirmasi pembayaran bisa dikirim via WhatsApp untuk verifikasi admin:
                   </p>
                   <div className="p-3.5 bg-neutral-900 rounded-2xl border border-neutral-800 text-xs font-mono space-y-1">
-                    <div className="text-neutral-400">Bank Central Asia (BCA)</div>
-                    <div className="text-white font-bold text-sm tracking-wider">
-                      6030611185
+                    <div className="text-white font-bold text-sm tracking-wider break-words">
+                      {settings?.bankAccountInfo || 'Hubungi admin via WhatsApp untuk detail rekening.'}
                     </div>
-                    <div className="text-neutral-400 text-[11px]">a.n. Fice Shoes Care</div>
                   </div>
                   <p className="text-[11px] text-neutral-400">
                     Send proof of transfer via WhatsApp to admin for instant verification.

@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { SystemSettings } from '@/lib/types';
+import { googleMapsUrl } from '@/lib/maps';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -105,7 +106,7 @@ export default function AdminSettingsPage() {
     return <div className="py-20 text-center text-rose-500 text-xs">Pengaturan tidak ditemukan.</div>;
   }
 
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${settings.workshopLat},${settings.workshopLng}`;
+  const mapsUrl = googleMapsUrl(settings.workshopLat, settings.workshopLng);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

@@ -172,21 +172,24 @@ export function getAvailablePickupDates(cutoffHour: number = 13): {
   isToday: boolean;
   availableSlots: Array<'morning' | 'afternoon'>;
 }[] {
-  const now = new Date();
-  const currentHour = now.getHours();
+  // Hitung di WIB, bukan zona perangkat: pelanggan di luar negeri / server UTC
+  // harus melihat tanggal jemput yang sama dengan yang divalidasi server.
+  const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const currentHour = nowWib.getUTCHours();
   const isPastCutoff = currentHour >= cutoffHour;
 
   const dates = [];
   const startIndex = isPastCutoff ? 1 : 0; // if past cutoff, skip today (0) and start from tomorrow (1)
 
   for (let i = startIndex; i < startIndex + 7; i++) {
-    const targetDate = new Date();
-    targetDate.setDate(now.getDate() + i);
+    const targetDate = new Date(
+      Date.UTC(nowWib.getUTCFullYear(), nowWib.getUTCMonth(), nowWib.getUTCDate() + i)
+    );
 
     const isToday = i === 0;
-    const year = targetDate.getFullYear();
-    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const day = String(targetDate.getDate()).padStart(2, '0');
+    const year = targetDate.getUTCFullYear();
+    const month = String(targetDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
 
     // Available slots: if today, only afternoon slot is available
@@ -200,7 +203,7 @@ export function getAvailablePickupDates(cutoffHour: number = 13): {
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
 
-    let label = `${dayNames[targetDate.getDay()]}, ${targetDate.getDate()} ${monthNames[targetDate.getMonth()]}`;
+    let label = `${dayNames[targetDate.getUTCDay()]}, ${targetDate.getUTCDate()} ${monthNames[targetDate.getUTCMonth()]}`;
     if (isToday) {
       label = `Hari Ini (${label})`;
     } else if (i === 1) {

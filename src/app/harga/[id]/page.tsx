@@ -23,29 +23,7 @@ import {
 import { formatRupiah } from '@/lib/invoice';
 import { readCart, writeCart } from '@/lib/cart';
 import type { Service } from '@/lib/types';
-
-const SERVICE_IMAGES: Record<string, string> = {
-  'srv-shoes-deepclean':
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1400&auto=format&fit=crop&q=85',
-  'srv-shoes-suede':
-    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=1400&auto=format&fit=crop&q=85',
-  'srv-shoes-leather':
-    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=1400&auto=format&fit=crop&q=85',
-  'srv-shoes-kids':
-    'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=1400&auto=format&fit=crop&q=85',
-  'srv-shoes-womens':
-    'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=1400&auto=format&fit=crop&q=85',
-  'srv-bag-small':
-    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1400&auto=format&fit=crop&q=85',
-  'srv-bag-medium':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1400&auto=format&fit=crop&q=85',
-  'srv-bag-large':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1400&auto=format&fit=crop&q=85',
-  'srv-acc-deepclean':
-    'https://images.unsplash.com/photo-1556906781-9a412961d28f?w=1400&auto=format&fit=crop&q=85',
-  fallback:
-    'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1400&auto=format&fit=crop&q=85',
-};
+import { serviceImage } from '@/lib/service-images';
 
 const CATEGORY_LABELS: Record<string, string> = {
   shoes: 'Sepatu',
@@ -76,29 +54,6 @@ const WHATS_INCLUDED: Record<string, string[]> = {
     'Deodorasi anti-bau',
     'Foto QC Before & After',
   ],
-};
-
-const RELATED_IMAGES: Record<string, string> = {
-  'srv-shoes-deepclean':
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80',
-  'srv-shoes-suede':
-    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400&auto=format&fit=crop&q=80',
-  'srv-shoes-leather':
-    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&auto=format&fit=crop&q=80',
-  'srv-shoes-kids':
-    'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=400&auto=format&fit=crop&q=80',
-  'srv-shoes-womens':
-    'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&auto=format&fit=crop&q=80',
-  'srv-bag-small':
-    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&auto=format&fit=crop&q=80',
-  'srv-bag-medium':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80',
-  'srv-bag-large':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80',
-  'srv-acc-deepclean':
-    'https://images.unsplash.com/photo-1556906781-9a412961d28f?w=400&auto=format&fit=crop&q=80',
-  fallback:
-    'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=80',
 };
 
 export default function ServiceDetailPage() {
@@ -179,7 +134,7 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const imageUrl = SERVICE_IMAGES[service.id] || SERVICE_IMAGES.fallback;
+  const imageUrl = serviceImage(service.id, 1400);
   const included = WHATS_INCLUDED[service.category] || WHATS_INCLUDED.shoes;
   const related = allServices
     .filter((s) => s.category === service.category && s.id !== service.id)
@@ -411,7 +366,7 @@ export default function ServiceDetailPage() {
                   >
                     <div className="h-48 sm:h-56 overflow-hidden">
                       <img
-                        src={RELATED_IMAGES[srv.id] || RELATED_IMAGES.fallback}
+                        src={serviceImage(srv.id, 400)}
                         alt={srv.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

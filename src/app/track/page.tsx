@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { Search, PackageCheck, AlertCircle, ArrowRight, ReceiptText } from 'lucide-react';
 import Link from 'next/link';
 import { isValidPhone } from '@/lib/phone';
-import { Order } from '@/lib/types';
+import { OrderSummary } from '@/lib/types';
 import { OrderStatusBadge } from '@/components/StatusBadge';
 
 export default function TrackSearchPage() {
@@ -15,7 +15,7 @@ export default function TrackSearchPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
-  const [matches, setMatches] = useState<Order[] | null>(null);
+  const [matches, setMatches] = useState<OrderSummary[] | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +26,13 @@ export default function TrackSearchPage() {
       return;
     }
 
-    if (clean.toUpperCase().startsWith('INV-') || clean.startsWith('ord-')) {
+    if (clean.toUpperCase().startsWith('INV-')) {
       router.push(`/track/${clean.toUpperCase()}`);
+      return;
+    }
+    // ID order case-sensitive (ord-...), jangan di-uppercase.
+    if (clean.startsWith('ord-')) {
+      router.push(`/track/${clean}`);
       return;
     }
 
@@ -43,7 +48,7 @@ export default function TrackSearchPage() {
           setError(data.error || 'Tidak ada pesanan untuk nomor ini.');
           return;
         }
-        const orders = data.data as Order[];
+        const orders = data.data as OrderSummary[];
         if (orders.length === 1) {
           router.push(`/track/${orders[0].invoiceNumber}`);
           return;
@@ -142,7 +147,7 @@ export default function TrackSearchPage() {
                               month: 'short',
                               year: 'numeric',
                             })}{' '}
-                            · {o.items.reduce((s, i) => s + i.quantity, 0)} item
+                            · {o.itemCount} item
                           </span>
                         </span>
                         <span className="flex items-center gap-2 shrink-0">

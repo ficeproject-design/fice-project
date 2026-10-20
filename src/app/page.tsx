@@ -30,6 +30,7 @@ import {
 import { COVERAGE_AREAS } from '@/lib/haversine';
 import { formatRupiah } from '@/lib/invoice';
 import type { Service } from '@/lib/types';
+import { serviceImage } from '@/lib/service-images';
 
 const SWAP_LOCATIONS = [
   'JAKSEL',
@@ -38,21 +39,6 @@ const SWAP_LOCATIONS = [
   'BINTARO',
   'BSD CITY',
 ];
-
-const SERVICE_IMAGES: Record<string, string> = {
-  'srv-shoes-deepclean':
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop',
-  'srv-shoes-leather':
-    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800&auto=format&fit=crop',
-  'srv-bag-medium':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop',
-  'srv-shoes-suede':
-    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=800&auto=format&fit=crop',
-  'srv-acc-deepclean':
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop',
-  fallback:
-    'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop',
-};
 
 interface HighlightTestimonial {
   id: string;
@@ -352,7 +338,7 @@ export default function HomePage() {
                       className="group relative flex-none w-[260px] sm:w-[300px] lg:w-[340px] h-[380px] sm:h-[420px] rounded-[28px] overflow-hidden"
                     >
                       <img
-                        src={SERVICE_IMAGES[srv.id] || SERVICE_IMAGES.fallback}
+                        src={serviceImage(srv.id, 800)}
                         alt={srv.name}
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />

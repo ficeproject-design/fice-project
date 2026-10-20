@@ -2,15 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Search, Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
 
 export default function Navbar() {
-  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-
-  const isActive = (path: string) => pathname === path;
 
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 

@@ -93,6 +93,11 @@ function QcGallery() {
     () => qcOrders.flatMap((g) => g.photos.map((p) => ({ photo: p, order: g.order }))),
     [qcOrders]
   );
+  const flatIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    flat.forEach((f, i) => map.set(f.photo.id, i));
+    return map;
+  }, [flat]);
 
   const downloadOne = async (photo: QualityCheckPhoto, order: Order, n: number) => {
     const filename = `${order.invoiceNumber}-${photo.type.toLowerCase()}-${n}.${extOf(photo.photoUrl)}`;
@@ -323,7 +328,7 @@ function QcGallery() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {photos.map((p) => {
-                const flatIdx = flat.findIndex((f) => f.photo.id === p.id);
+                const flatIdx = flatIndexById.get(p.id) ?? 0;
                 return (
                   <button
                     key={p.id}
