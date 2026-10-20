@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Quote,
 } from 'lucide-react';
-import { Order, OrderStatus, PaymentStatus } from '@/lib/types';
+import { Order, OrderStatus, PaymentStatus, PaymentMethod } from '@/lib/types';
+import { googleMapsUrl } from '@/lib/maps';
 import { formatRupiah, createWhatsAppUrl } from '@/lib/invoice';
 import {
   OrderStatusBadge,
@@ -50,13 +51,6 @@ const PIPELINE: OrderStatus[] = [
   'COMPLETED',
 ];
 
-function getGoogleMapsUrl(lat?: number, lng?: number, fallbackAddress?: string) {
-  if (lat && lng) {
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-  }
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackAddress || '')}`;
-}
-
 export default function AdminOrderDetailPage({
   params,
 }: {
@@ -73,6 +67,7 @@ export default function AdminOrderDetailPage({
 
   const [draftStatus, setDraftStatus] = useState<OrderStatus>('WAITING_PICKUP');
   const [draftPayStatus, setDraftPayStatus] = useState<PaymentStatus>('UNPAID');
+  const [draftPayMethod, setDraftPayMethod] = useState<PaymentMethod>('TRANSFER');
 
   const [qcType, setQcType] = useState<'BEFORE' | 'AFTER'>('BEFORE');
   const [qcPhotoUrl, setQcPhotoUrl] = useState('');
@@ -87,6 +82,7 @@ export default function AdminOrderDetailPage({
         setOrder(json.data);
         setDraftStatus(json.data.status);
         setDraftPayStatus(json.data.paymentStatus);
+        setDraftPayMethod(json.data.paymentMethod || 'TRANSFER');
         setDraftReview(json.data.customerReview || '');
         setNotFound(false);
       } else {
@@ -125,6 +121,7 @@ export default function AdminOrderDetailPage({
         setOrder(json.data);
         setDraftStatus(json.data.status);
         setDraftPayStatus(json.data.paymentStatus);
+        setDraftPayMethod(json.data.paymentMethod || 'TRANSFER');
         setDraftReview(json.data.customerReview || '');
         showFeedback('ok', okText);
       } else {
@@ -169,7 +166,7 @@ export default function AdminOrderDetailPage({
 
   const handleCopyAddress = () => {
     if (!order) return;
-    const mapsUrl = getGoogleMapsUrl(
+    const mapsUrl = googleMapsUrl(
       order.customer.latitude,
       order.customer.longitude,
       `${order.customer.address}, ${order.customer.city}`
@@ -225,7 +222,9 @@ export default function AdminOrderDetailPage({
     : null;
   const waUrl = createWhatsAppUrl(
     order.customer.phone,
-    `Halo Kak ${order.customer.name}, update pesanan *${order.invoiceNumber}* di Fice Shoes Care. Rincian dan foto QC bisa dicek di sini: /track/${order.invoiceNumber}`
+    `Halo Kak ${order.customer.name}, update pesanan *${order.invoiceNumber}* di Fice Shoes Care. Rincian dan foto QC bisa dicek di sini: ${
+      typeof window !== 'undefined' ? window.location.origin : ''
+    }/track/${order.invoiceNumber}`
   );
 
   return (
@@ -298,7 +297,7 @@ export default function AdminOrderDetailPage({
             <OrderStatusBadge status={order.status} />
             <PaymentStatusBadge status={order.paymentStatus} />
             <a
-              href={getGoogleMapsUrl(
+              href={googleMapsUrl(
                 order.customer.latitude,
                 order.customer.longitude,
                 `${order.customer.address}, ${order.customer.city}`
@@ -416,8 +415,26 @@ export default function AdminOrderDetailPage({
                 <option value="PAID">Lunas / Sudah Bayar</option>
               </select>
             </div>
+            <div>
+              <label
+                htmlFor="pay-method"
+                className="text-[11px] font-bold text-slate-500 block mb-1"
+              >
+                Metode Bayar
+              </label>
+              <select
+                id="pay-method"
+                value={draftPayMethod}
+                onChange={(e) => setDraftPayMethod(e.target.value as PaymentMethod)}
+                className="w-full text-xs px-3 py-3 rounded-xl border border-slate-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="TRANSFER">Transfer Bank</option>
+                <option value="QRIS">QRIS</option>
+                <option value="COD">COD / Tunai</option>
+              </select>
+            </div>
             <p className="text-[11px] text-slate-500">
-              Metode pembayaran: <strong className="text-slate-700">Transfer Bank BCA</strong> (rekening tampil di halaman lacak pelanggan).
+              Rekening tujuan tampil di halaman lacak pelanggan.
             </p>
             <button
               type="button"
@@ -426,12 +443,16 @@ export default function AdminOrderDetailPage({
                   {
                     action: 'update_payment',
                     paymentStatus: draftPayStatus,
-                    paymentMethod: 'TRANSFER',
+                    paymentMethod: draftPayMethod,
                   },
                   'Data pembayaran diperbarui.'
                 )
               }
-              disabled={busy || draftPayStatus === order.paymentStatus}
+              disabled={
+                busy ||
+                (draftPayStatus === order.paymentStatus &&
+                  draftPayMethod === (order.paymentMethod || 'TRANSFER'))
+              }
               className="bg-[#0d1526] hover:bg-emerald-700 disabled:opacity-40 text-white font-bold text-xs px-5 py-3 rounded-xl transition-colors inline-flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -672,7 +693,7 @@ export default function AdminOrderDetailPage({
             </div>
             <div className="flex flex-wrap gap-2">
               <a
-                href={getGoogleMapsUrl(
+                href={googleMapsUrl(
                   order.customer.latitude,
                   order.customer.longitude,
                   `${order.customer.address}, ${order.customer.city}`

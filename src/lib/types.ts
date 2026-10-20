@@ -88,6 +88,16 @@ export interface Order {
   paidAt?: string;
 }
 
+export interface OrderSummary {
+  id: string;
+  invoiceNumber: string;
+  status: OrderStatus;
+  createdAt: string;
+  pickupDate: string;
+  itemCount: number;
+  totalAmount: number;
+}
+
 export type PromoDiscountType = 'PERCENT' | 'FIXED';
 
 export interface PromoCode {
@@ -117,6 +127,5 @@ export interface SystemSettings {
   freeRadiusKm: number; // default: 15 (estimasi jarak jalan)
   minItemsBeyondRadius: number; // default: 3
   cutoffHour: number; // default: 13
-  qrisImageUrl?: string;
   bankAccountInfo?: string;
 }

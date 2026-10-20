@@ -13,6 +13,8 @@ import {
 import { DEFAULT_WORKSHOP_COORDS } from './haversine';
 import { generateInvoiceNumber, formatRupiah } from './invoice';
 import { cleanPhoneDigits, normalizeIdPhone } from './phone';
+import { computeDiscount, isPromoExpired } from './promo';
+import { shouldSeedDemo } from './seed';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'db.json');
 
@@ -735,10 +737,11 @@ export const DEFAULT_PROMOS: PromoCode[] = [
 
 function readDb(): DatabaseSchema {
   if (!fs.existsSync(DATA_FILE)) {
+    const seedDemo = shouldSeedDemo(process.env.NODE_ENV);
     const initialDb: DatabaseSchema = {
       services: DEFAULT_SERVICES,
-      customers: INITIAL_CUSTOMERS,
-      orders: INITIAL_ORDERS,
+      customers: seedDemo ? INITIAL_CUSTOMERS : [],
+      orders: seedDemo ? INITIAL_ORDERS : [],
       settings: DEFAULT_SETTINGS,
       promos: DEFAULT_PROMOS,
     };
@@ -776,22 +779,6 @@ export function getServices(): Service[] {
   return readDb().services.map(withLongDescription);
 }
 
-export function getServiceById(id: string): Service | undefined {
-  const found = readDb().services.find((s) => s.id === id);
-  return found ? withLongDescription(found) : undefined;
-}
-
-export function updateService(updated: Service): boolean {
-  const db = readDb();
-  const idx = db.services.findIndex((s) => s.id === updated.id);
-  if (idx !== -1) {
-    db.services[idx] = updated;
-    writeDb(db);
-    return true;
-  }
-  return false;
-}
-
 // Order Methods
 export function getOrders(): Order[] {
   return readDb().orders.sort(
@@ -821,7 +808,9 @@ export function getOrdersByPhone(rawPhone: string): Order[] {
 }
 
 export function createOrder(
-  newOrder: Omit<Order, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt' | 'qcPhotos'>
+  newOrder: Omit<Order, 'id' | 'invoiceNumber' | 'createdAt' | 'updatedAt' | 'qcPhotos' | 'customer'> & {
+    customer: Omit<Customer, 'id' | 'totalOrders' | 'lastOrderAt' | 'createdAt'>;
+  }
 ): Order {
   const db = readDb();
   const id =
@@ -953,25 +942,24 @@ export function addQCPhoto(
   orderId: string,
   photo: { type: 'BEFORE' | 'AFTER'; photoUrl: string; notes?: string }
 ): Order | null {
+  // Cek order dulu: jangan tulis file kalau order tidak ada (file yatim = disk bocor).
+  const db = readDb();
+  const order = db.orders.find((o) => o.id === orderId);
+  if (!order) return null;
   const storedUrl = photo.photoUrl.startsWith('data:')
     ? saveDataUrlAsFile(photo.photoUrl)
     : photo.photoUrl;
-  const db = readDb();
-  const order = db.orders.find((o) => o.id === orderId);
-  if (order) {
-    const qcPhoto: QualityCheckPhoto = {
-      id: 'qc-' + Date.now(),
-      type: photo.type,
-      photoUrl: storedUrl,
-      notes: photo.notes,
-      createdAt: new Date().toISOString(),
-    };
-    order.qcPhotos.push(qcPhoto);
-    order.updatedAt = new Date().toISOString();
-    writeDb(db);
-    return order;
-  }
-  return null;
+  const qcPhoto: QualityCheckPhoto = {
+    id: 'qc-' + Date.now(),
+    type: photo.type,
+    photoUrl: storedUrl,
+    notes: photo.notes,
+    createdAt: new Date().toISOString(),
+  };
+  order.qcPhotos.push(qcPhoto);
+  order.updatedAt = new Date().toISOString();
+  writeDb(db);
+  return order;
 }
 
 export function deleteQCPhoto(orderId: string, photoId: string): Order | null {
@@ -1056,7 +1044,7 @@ export function getSettings(): SystemSettings {
 const SETTING_KEYS: (keyof SystemSettings)[] = [
   'workshopName', 'workshopAddress', 'workshopCity', 'workshopLat', 'workshopLng',
   'adminPhone', 'freeRadiusKm', 'minItemsBeyondRadius', 'cutoffHour',
-  'qrisImageUrl', 'bankAccountInfo',
+  'bankAccountInfo',
 ];
 const NUMERIC_SETTINGS: (keyof SystemSettings)[] = [
   'workshopLat', 'workshopLng', 'freeRadiusKm', 'minItemsBeyondRadius', 'cutoffHour',
@@ -1125,15 +1113,6 @@ export function getPromos(): PromoCode[] {
   return (readDb().promos || []).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-}
-
-export function getPromoById(id: string): PromoCode | undefined {
-  return (readDb().promos || []).find((p) => p.id === id);
-}
-
-export function getPromoByCode(rawCode: string): PromoCode | undefined {
-  const code = rawCode.trim().toUpperCase();
-  return (readDb().promos || []).find((p) => p.code.toUpperCase() === code);
 }
 
 export function createPromo(
@@ -1212,16 +1191,12 @@ export function validatePromoCode(
     };
   }
 
-  // Check expiration date
-  if (promo.validUntil) {
-    const expiry = new Date(promo.validUntil);
-    expiry.setHours(23, 59, 59, 999);
-    if (new Date() > expiry) {
-      return {
-        valid: false,
-        message: `Masa berlaku kode promo ini telah berakhir pada ${new Date(promo.validUntil).toLocaleDateString('id-ID')}.`,
-      };
-    }
+  // Check expiration date (WIB, inklusif sampai 23:59)
+  if (isPromoExpired(promo.validUntil)) {
+    return {
+      valid: false,
+      message: `Masa berlaku kode promo ini telah berakhir pada ${promo.validUntil}.`,
+    };
   }
 
   // Check usage limit
@@ -1253,16 +1228,7 @@ export function validatePromoCode(
   }
 
   // Calculate discount
-  let discountAmount = 0;
-  if (promo.discountType === 'PERCENT') {
-    discountAmount = Math.round((subtotal * promo.discountValue) / 100);
-    if (promo.maxDiscount && discountAmount > promo.maxDiscount) {
-      discountAmount = promo.maxDiscount;
-    }
-  } else {
-    // FIXED
-    discountAmount = Math.min(promo.discountValue, subtotal);
-  }
+  const discountAmount = computeDiscount(promo, subtotal);
 
   return {
     valid: true,
@@ -1272,12 +1238,3 @@ export function validatePromoCode(
   };
 }
 
-export function incrementPromoUsage(rawCode: string): void {
-  const code = rawCode.trim().toUpperCase();
-  const db = readDb();
-  const promo = (db.promos || []).find((p) => p.code.toUpperCase() === code);
-  if (promo) {
-    promo.usedCount = (promo.usedCount || 0) + 1;
-    writeDb(db);
-  }
-}

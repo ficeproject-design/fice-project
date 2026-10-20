@@ -8,25 +8,30 @@ import {
   deleteQCPhoto,
   updateCustomerReview,
 } from '@/lib/db';
+import { canTransition } from '@/lib/order-status';
+import { clientIp, createRateLimiter } from '@/lib/rate-limit';
 import type { OrderStatus } from '@/lib/types';
 
-/** Allowed forward/backward steps. Terminal states have no outgoing edges. */
-const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  WAITING_PICKUP: ['PICKING_UP', 'CANCELLED'],
-  PICKING_UP: ['IN_WORKSHOP', 'WAITING_PICKUP', 'CANCELLED'],
-  IN_WORKSHOP: ['IN_PROGRESS', 'CANCELLED'],
-  IN_PROGRESS: ['READY_TO_DELIVER', 'CANCELLED'],
-  READY_TO_DELIVER: ['DELIVERING', 'CANCELLED'],
-  DELIVERING: ['COMPLETED', 'READY_TO_DELIVER'],
-  COMPLETED: [],
-  CANCELLED: [],
-};
+const VALID_STATUSES: OrderStatus[] = [
+  'WAITING_PICKUP', 'PICKING_UP', 'IN_WORKSHOP', 'IN_PROGRESS',
+  'READY_TO_DELIVER', 'DELIVERING', 'COMPLETED', 'CANCELLED',
+];
+
+// Invoice adalah capability, jadi lookup publik dibatasi laju brute force-nya.
+const lookupLimiter = createRateLimiter(60, 5 * 60 * 1000);
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (lookupLimiter.limited(`order-get:${clientIp(req.headers)}`)) {
+      return NextResponse.json(
+        { success: false, error: 'Terlalu banyak percobaan. Coba lagi beberapa menit.' },
+        { status: 429 }
+      );
+    }
+
     const { id } = await params;
     let order = getOrderById(id);
     if (!order) {
@@ -63,11 +68,7 @@ export async function PATCH(
 
     // Action: Update Order Status (guarded transitions)
     if (action === 'update_status') {
-      const valid: OrderStatus[] = [
-        'WAITING_PICKUP', 'PICKING_UP', 'IN_WORKSHOP', 'IN_PROGRESS',
-        'READY_TO_DELIVER', 'DELIVERING', 'COMPLETED', 'CANCELLED',
-      ];
-      if (valid.includes(status)) {
+      if (VALID_STATUSES.includes(status)) {
         const current = getOrderById(id);
         if (!current) {
           return NextResponse.json(
@@ -75,8 +76,7 @@ export async function PATCH(
             { status: 404 }
           );
         }
-        const allowed = ALLOWED_TRANSITIONS[current.status] || [];
-        if (!allowed.includes(status)) {
+        if (!canTransition(current.status, status)) {
           return NextResponse.json(
             {
               success: false,

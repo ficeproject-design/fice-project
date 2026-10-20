@@ -20,9 +20,10 @@ import {
 } from 'lucide-react';
 import { PromoCode, PromoDiscountType } from '@/lib/types';
 import { formatRupiah } from '@/lib/invoice';
+import { isPromoExpired } from '@/lib/promo';
 
 function getPromoHealth(p: PromoCode): 'ACTIVE' | 'EXPIRED_OR_EXHAUSTED' | 'INACTIVE' {
-  const isExpired = p.validUntil ? new Date() > new Date(`${p.validUntil}T23:59:59`) : false;
+  const isExpired = isPromoExpired(p.validUntil);
   const isExhausted = p.usageLimit ? p.usedCount >= p.usageLimit : false;
   if (!p.isActive) return 'INACTIVE';
   if (isExpired || isExhausted) return 'EXPIRED_OR_EXHAUSTED';
@@ -405,7 +406,7 @@ export default function AdminPromosPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {filteredPromos.map((p) => {
-                  const isExpired = p.validUntil ? new Date() > new Date(`${p.validUntil}T23:59:59`) : false;
+                  const isExpired = isPromoExpired(p.validUntil);
                   const isExhausted = p.usageLimit ? p.usedCount >= p.usageLimit : false;
 
                   return (

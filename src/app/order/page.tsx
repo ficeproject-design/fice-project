@@ -19,7 +19,6 @@ import {
   Banknote,
   ShieldCheck,
   Sparkles,
-  Info,
   Clock,
   Tag,
   Ticket,
@@ -35,7 +34,7 @@ import {
 import { formatRupiah } from '@/lib/invoice';
 import { isValidPhone, PHONE_HINT } from '@/lib/phone';
 import { readCart, writeCart, clearCart } from '@/lib/cart';
-import { Service, ServiceCategory } from '@/lib/types';
+import { Service, ServiceCategory, SystemSettings } from '@/lib/types';
 
 type PickupDateOption = ReturnType<typeof getAvailablePickupDates>[number];
 
@@ -85,11 +84,15 @@ export default function OrderPage() {
   const [mapPinTouched, setMapPinTouched] = useState(false);
 
   // Step 3: Schedule. Dihitung saat init, bukan di effect (tanpa setState sinkron).
-  const [availableDates] = useState<PickupDateOption[]>(() => getAvailablePickupDates(13));
+  const [availableDates, setAvailableDates] = useState<PickupDateOption[]>(() =>
+    getAvailablePickupDates(13)
+  );
   const [selectedDate, setSelectedDate] = useState(() => availableDates[0]?.date ?? '');
   const [selectedSlot, setSelectedSlot] = useState<'morning' | 'afternoon'>(
     () => availableDates[0]?.availableSlots[0] ?? 'afternoon'
   );
+  // Cut-off, workshop pin, dan radius ikut setting admin (bukan angka hardcode).
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
 
   // Step 4: Catatan pesanan
   const [orderNotes, setOrderNotes] = useState('');
@@ -137,10 +140,35 @@ export default function OrderPage() {
     loadServices();
   }, []);
 
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        if (!data.success) return;
+        const s = data.data as SystemSettings;
+        setSettings(s);
+        // Tanggal jemput dihitung ulang dengan cut-off asli; user belum memilih
+        // apa pun saat fetch ini selesai (dipanggil sekali saat mount).
+        const dates = getAvailablePickupDates(s.cutoffHour ?? 13);
+        setAvailableDates(dates);
+        setSelectedDate(dates[0]?.date ?? '');
+        setSelectedSlot(dates[0]?.availableSlots[0] ?? 'afternoon');
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    }
+    loadSettings();
+  }, []);
+
   const handleQuantityChange = (service: Service, delta: number) => {
+    // Keranjang berubah = nominal diskon lama tidak berlaku lagi; lepas promo
+    // supaya total di layar tidak pernah beda dengan total dari server.
+    setAppliedPromo(null);
+    setPromoSuccess(null);
     setSelectedItems((prev) => {
       const existing = prev[service.id];
-      const newQty = (existing?.quantity || 0) + delta;
+      const newQty = Math.min(50, (existing?.quantity || 0) + delta);
 
       let next: Record<string, SelectedItem>;
       if (newQty <= 0) {
@@ -212,6 +240,7 @@ export default function OrderPage() {
         body: JSON.stringify({
           code: promoCodeInput.trim(),
           subtotal,
+          phone: customerPhone.trim(),
         }),
       });
 
@@ -247,7 +276,15 @@ export default function OrderPage() {
     return s.category === categoryFilter;
   });
 
-  const eligibility = checkOrderEligibility(latitude, longitude, totalItemsCount);
+  const eligibility = checkOrderEligibility(
+    latitude,
+    longitude,
+    totalItemsCount,
+    settings?.workshopLat ?? DEFAULT_WORKSHOP_COORDS.lat,
+    settings?.workshopLng ?? DEFAULT_WORKSHOP_COORDS.lng,
+    settings?.freeRadiusKm ?? 15,
+    settings?.minItemsBeyondRadius ?? 3
+  );
 
   const canProceedStep1 = totalItemsCount > 0;
   const selectedDateEntry = availableDates.find((d) => d.date === selectedDate);
@@ -291,7 +328,6 @@ export default function OrderPage() {
         pickupDate: selectedDate,
         pickupSlot: selectedSlot,
         promoCode: appliedPromo?.code,
-        discountAmount: discountAmount > 0 ? discountAmount : undefined,
         notes: orderNotes.trim(),
       };
 
@@ -780,6 +816,9 @@ export default function OrderPage() {
                   <MapPicker
                     initialLat={latitude}
                     initialLng={longitude}
+                    workshopLat={settings?.workshopLat}
+                    workshopLng={settings?.workshopLng}
+                    freeRadiusKm={settings?.freeRadiusKm}
                     onLocationChange={handleLocationChange}
                   />
                 </div>

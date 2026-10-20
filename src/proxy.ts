@@ -17,19 +17,20 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   const method = req.method
 
+  // Login page with a valid session goes straight to the dashboard. Checked
+  // before the login-flow early return, otherwise this branch never runs.
+  const authed = await verifySessionToken(req.cookies.get(AUTH_COOKIE)?.value)
+  if (authed && pathname === '/admin/login') {
+    return NextResponse.redirect(new URL('/admin', req.url))
+  }
+
   const isLoginFlow =
     pathname === '/admin/login' ||
     pathname.startsWith('/api/admin/login') ||
     pathname.startsWith('/api/admin/logout')
   if (isLoginFlow) return NextResponse.next()
 
-  const authed = await verifySessionToken(req.cookies.get(AUTH_COOKIE)?.value)
-  if (authed) {
-    if (pathname === '/admin/login') {
-      return NextResponse.redirect(new URL('/admin', req.url))
-    }
-    return NextResponse.next()
-  }
+  if (authed) return NextResponse.next()
 
   const needsAdmin =
     pathname.startsWith('/admin') ||

@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Customer } from '@/lib/types';
+import { googleMapsUrl } from '@/lib/maps';
 
 interface EnrichedCustomer extends Customer {
   suggestedSellingMessage: string;
@@ -185,11 +186,11 @@ export default function AdminCustomersPage() {
                       )}
                       <div>
                         <a
-                          href={
-                            cust.latitude && cust.longitude
-                              ? `https://www.google.com/maps/search/?api=1&query=${cust.latitude},${cust.longitude}`
-                              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${cust.address}, ${cust.city}`)}`
-                          }
+                          href={googleMapsUrl(
+                            cust.latitude,
+                            cust.longitude,
+                            `${cust.address}, ${cust.city}`
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-[#f06a60] hover:text-[#d4534a] bg-[#f06a60]/10 hover:bg-[#f06a60]/20 px-2 py-0.5 rounded transition-colors mt-1.5 w-fit"
