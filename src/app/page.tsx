@@ -18,7 +18,6 @@ import {
   Layers,
   ChevronRight,
   HelpCircle,
-  Star,
   Phone,
   MessageSquare,
   BadgeCheck,
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react';
 import { COVERAGE_AREAS } from '@/lib/haversine';
 import { formatRupiah } from '@/lib/invoice';
+import { groupServices, priceRange, type ServiceGroup } from '@/lib/variants';
 import type { Service } from '@/lib/types';
 import { serviceImage } from '@/lib/service-images';
 
@@ -40,25 +40,13 @@ const SWAP_LOCATIONS = [
   'BSD CITY',
 ];
 
-interface HighlightTestimonial {
-  id: string;
-  firstName: string;
-  area: string;
-  services: string[];
-  beforePhoto?: string;
-  afterPhoto?: string;
-  review?: string;
-  completedAt: string;
-}
-
 export default function HomePage() {
   const router = useRouter();
   const [trackQuery, setTrackQuery] = useState('');
   const [locationIndex, setLocationIndex] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [coverageModalOpen, setCoverageModalOpen] = useState(false);
-  const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
-  const [highlightTestimonials, setHighlightTestimonials] = useState<HighlightTestimonial[]>([]);
+  const [featuredGroups, setFeaturedGroups] = useState<ServiceGroup[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -67,9 +55,11 @@ export default function HomePage() {
         const data = await res.json();
         if (data.success) {
           const all = data.data as Service[];
-          const popular = all.filter((s) => s.popular);
-          const rest = all.filter((s) => !s.popular);
-          setFeaturedServices([...popular, ...rest].slice(0, 4));
+          // Layanan varian (mis. Bag Deep Clean S/M/L) ditampilkan sebagai satu kartu.
+          const groups = groupServices(all);
+          const popular = groups.filter((g) => g.primary.popular);
+          const rest = groups.filter((g) => !g.primary.popular);
+          setFeaturedGroups([...popular, ...rest].slice(0, 4));
         }
       } catch {
         // gagal load, section highlight tetap aman tampil kosong
@@ -83,22 +73,6 @@ export default function HomePage() {
       setLocationIndex((prev) => (prev + 1) % SWAP_LOCATIONS.length);
     }, 2400);
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/testimonials');
-        const data = await res.json();
-        if (data.success) {
-          const all = data.data as HighlightTestimonial[];
-          const withReview = all.filter((t) => t.review);
-          setHighlightTestimonials([...withReview, ...all.filter((t) => !t.review)].slice(0, 3));
-        }
-      } catch {
-        // gagal load, section highlight testimoni disembunyikan
-      }
-    })();
   }, []);
 
   const handleQuickTrack = (e: React.FormEvent) => {
@@ -121,15 +95,19 @@ export default function HomePage() {
               
               {/* IMAGE CARD — mobile: first (on top), desktop: right side */}
               <div className="order-1 lg:order-2 rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] overflow-hidden relative shadow-xs h-[320px] sm:h-[400px] lg:h-full bg-[#f2ece5]">
-                <img
-                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1400&auto=format&fit=crop&q=85"
-                  alt="Shoes Care Detailing"
-                  className="w-full h-full object-cover"
-                />
+                {/* Sumber terpisah: versi mobile (2 sepatu rapat) & desktop (4 sepatu landscape) */}
+                <picture className="block w-full h-full">
+                  <source media="(min-width: 1024px)" srcSet="/images/hero-desktop.webp" />
+                  <img
+                    src="/images/hero-mobile.webp"
+                    alt="Shoes Care Detailing"
+                    className="w-full h-full object-cover"
+                  />
+                </picture>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                {/* Floating pill badge */}
-                <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8 flex items-center justify-between text-white text-xs sm:text-sm font-bold bg-black/60 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20">
+                {/* Floating pill badge — dinaikkan agar tidak terpotong kartu navy */}
+                <div className="absolute bottom-12 sm:bottom-16 lg:bottom-4 left-4 sm:left-6 right-4 sm:right-6 flex items-center justify-between text-white text-xs sm:text-sm font-bold bg-black/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#f06a60] animate-pulse"></span>
                     <span>Fice Shoes Care Workshop</span>
@@ -138,15 +116,15 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* DARK CARD — mobile: second (overlaps image), desktop: left side */}
-              <div className="order-2 lg:order-1 bg-[#0d1526] text-white rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between shadow-xs h-full -mt-16 sm:-mt-20 lg:mt-0 relative z-10">
+              {/* RED CARD — mobile: second (overlaps image), desktop: left side */}
+              <div className="order-2 lg:order-1 bg-[#f06a60] text-white rounded-[28px] sm:rounded-[36px] lg:rounded-[40px] p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between shadow-xs lg:h-full -mt-10 sm:-mt-14 lg:mt-0 relative z-10">
                 {/* Top Rating Badges */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <div className="inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold tracking-wide transition-colors">
+                  <div className="inline-flex items-center gap-2 bg-white text-[#0d1526] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold tracking-wide">
                     <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#f06a60] text-white flex items-center justify-center font-black text-[9px] sm:text-[10px]">
                       ★
                     </span>
-                    <span>100% FREE PICKUP</span>
+                    <span>FREE PICKUP &amp; DELIVERY</span>
                   </div>
                 </div>
 
@@ -156,7 +134,7 @@ export default function HomePage() {
                     <span className="block">CLEANING</span>
                     <span className="block">FOR BUSY</span>
                     <span className="block">PEOPLE IN</span>
-                    <span className="block text-[#f06a60] transition-all duration-300">
+                    <span className="block text-white transition-all duration-300">
                       {SWAP_LOCATIONS[locationIndex]}
                     </span>
                   </h1>
@@ -166,7 +144,7 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <Link
                     href="/order"
-                    className="group relative inline-flex items-center justify-center bg-[#f06a60] hover:bg-white text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 ease-out active:scale-95 overflow-hidden"
+                    className="group relative inline-flex items-center justify-center bg-[#000000] hover:bg-white text-white hover:text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 ease-out active:scale-95 overflow-hidden"
                   >
                     <span className="transition-colors duration-300">BOOK YOUR CLEANING</span>
                     <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2.5 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
@@ -176,7 +154,7 @@ export default function HomePage() {
 
                   <Link
                     href="#layanan"
-                    className="group relative inline-flex items-center justify-center bg-white/10 hover:bg-white text-white hover:text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl border border-white/15 hover:border-white transition-all duration-300 ease-out overflow-hidden"
+                    className="group relative inline-flex items-center justify-center bg-white/20 hover:bg-white text-white hover:text-[#000000] font-heading font-bold text-sm sm:text-lg lg:text-[19px] xl:text-[20px] tracking-normal uppercase px-5 sm:px-7 py-3 sm:py-4 rounded-2xl border border-white/25 hover:border-white transition-all duration-300 ease-out overflow-hidden"
                   >
                     <span className="transition-colors duration-300">SEE PRICING</span>
                     <span className="max-w-0 opacity-0 -translate-x-2 group-hover:max-w-6 group-hover:opacity-100 group-hover:translate-x-0 group-hover:ml-2 transition-all duration-300 ease-out inline-flex items-center overflow-hidden">
@@ -265,53 +243,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* MARQUEE CONTINUOUS SCROLLING TICKER */}
-        <div className="bg-[#000000] text-white py-3.5 overflow-hidden border-y border-neutral-900">
-          <div className="animate-marquee flex items-center gap-8 text-xs sm:text-sm font-heading font-bold uppercase tracking-widest whitespace-nowrap">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              DEEP CLEAN SHOES
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              SPECIAL SUEDE & LEATHER TREATMENT
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              BAG & BACKPACK CLEANING
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              100% FREE PICKUP &amp; DELIVERY
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              PHOTO QC DOCUMENTATION — BEFORE &amp; AFTER
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              PAY AFTER ARRIVAL AT WORKSHOP
-            </span>
-            {/* Loop duplicate */}
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              DEEP CLEAN SHOES
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              SPECIAL SUEDE & LEATHER TREATMENT
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              BAG & BACKPACK CLEANING
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#f06a60]"></span>
-              100% FREE PICKUP &amp; DELIVERY
-            </span>
-          </div>
-        </div>
-
         {/* SECTION "WHAT WE CLEAN" / SERVICES */}
         <section id="layanan" className="py-20 sm:py-24 bg-[#fdf8f1] scroll-mt-12">
           <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
@@ -328,46 +259,52 @@ export default function HomePage() {
               </p>
             </div>
 
-            {featuredServices.length > 0 && (
+            {featuredGroups.length > 0 && (
               <div className="overflow-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10">
                 <div className="animate-carousel flex gap-4 sm:gap-5 w-max">
-                  {[...featuredServices, ...featuredServices].map((srv, i) => (
-                    <Link
-                      key={`${srv.id}-${i}`}
-                      href={`/harga/${srv.id}`}
-                      className="group relative flex-none w-[260px] sm:w-[300px] lg:w-[340px] h-[380px] sm:h-[420px] rounded-[28px] overflow-hidden"
-                    >
-                      <img
-                        src={serviceImage(srv.id, 800)}
-                        alt={srv.name}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      <div className="absolute inset-0 p-5 sm:p-6 flex flex-col justify-end">
-                        <div className="space-y-2">
-                          <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-white/70">
-                            {srv.category === 'shoes'
-                              ? 'Sepatu'
-                              : srv.category === 'bag'
-                                ? 'Tas'
-                                : 'Topi & Aksesori'}
-                          </span>
-                          <h3 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white uppercase leading-[0.95]">
-                            {srv.name}
-                          </h3>
-                          <div className="flex items-center justify-between gap-3 pt-2">
-                            <span className="font-heading font-black text-lg text-[#f06a60]">
-                              {formatRupiah(srv.price)}
+                  {[...featuredGroups, ...featuredGroups].map((group, i) => {
+                    const srv = group.primary;
+                    const { min, max, hasRange } = priceRange(group.variants);
+                    return (
+                      <Link
+                        key={`${group.key}-${i}`}
+                        href={`/harga/${srv.id}`}
+                        className="group relative flex-none w-[260px] sm:w-[300px] lg:w-[340px] h-[380px] sm:h-[420px] rounded-[28px] overflow-hidden"
+                      >
+                        <img
+                          src={serviceImage(srv.id, 800)}
+                          alt={srv.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 p-5 sm:p-6 flex flex-col justify-end">
+                          <div className="space-y-2">
+                            <span className="text-[10px] uppercase font-heading font-bold tracking-wider text-white/70">
+                              {srv.category === 'shoes'
+                                ? 'Sepatu'
+                                : srv.category === 'bag'
+                                  ? 'Tas'
+                                  : 'Topi & Aksesori'}
                             </span>
-                            <span className="text-[11px] text-white/60 inline-flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              {srv.estimatedDays}
-                            </span>
+                            <h3 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white uppercase leading-[0.95]">
+                              {srv.name}
+                            </h3>
+                            <div className="flex items-center justify-between gap-3 pt-2">
+                              <span className="font-heading font-black text-lg text-[#f06a60]">
+                                {hasRange
+                                  ? `${formatRupiah(min)} – ${formatRupiah(max)}`
+                                  : formatRupiah(min)}
+                              </span>
+                              <span className="text-[11px] text-white/60 inline-flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                {srv.estimatedDays}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -453,95 +390,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* SECTION TESTIMONIAL HIGHLIGHT (data real dari /api/testimonials) */}
-        {highlightTestimonials.length > 0 && (
-        <section className="py-20 sm:py-24 bg-[#fdf8f1]">
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="bg-[#000000] rounded-[32px] sm:rounded-[40px] text-white p-8 sm:p-14 lg:p-16 overflow-hidden relative shadow-2xl">
-              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10 lg:mb-12">
-                <div className="space-y-5 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 bg-[#f06a60] text-white text-xs sm:text-sm font-heading font-bold uppercase px-4 py-1.5 rounded-full">
-                    <Star className="w-4 h-4 fill-white" />
-                    Testimoni Pelanggan
-                  </div>
-                  <h2 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-6xl uppercase text-white leading-tight">
-                    Kata Mereka yang Sudah Coba
-                  </h2>
-                  <p className="text-sm sm:text-base text-neutral-300 leading-relaxed">
-                    Hasil before-after asli dari workshop kami beserta ulasan pelanggan.
-                  </p>
-                </div>
-                <Link
-                  href="/testimoni"
-                  className="group inline-flex items-center gap-2 text-white font-heading font-bold text-sm sm:text-base uppercase tracking-normal shrink-0"
-                >
-                  <span className="border-b-2 border-[#f06a60] pb-1 group-hover:text-[#f06a60] transition-colors">
-                    Lihat Semua Testimoni
-                  </span>
-                  <ArrowRight className="w-5 h-5 text-[#f06a60] group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                {highlightTestimonials.map((t) => (
-                  <article
-                    key={t.id}
-                    className="bg-neutral-900 rounded-[28px] border border-neutral-800 overflow-hidden flex flex-col"
-                  >
-                    <div className="grid grid-cols-2 gap-0.5 p-3 pb-0">
-                      <figure className="relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-neutral-800">
-                        {t.beforePhoto && (
-                          <img
-                            src={t.beforePhoto}
-                            alt={`Kondisi awal ${t.firstName}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        )}
-                        <figcaption className="absolute top-2.5 left-2.5 bg-black/80 text-amber-300 text-[10px] font-heading font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
-                          Before
-                        </figcaption>
-                      </figure>
-                      <figure className="relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-neutral-800">
-                        {t.afterPhoto && (
-                          <img
-                            src={t.afterPhoto}
-                            alt={`Hasil akhir ${t.firstName}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        )}
-                        <figcaption className="absolute top-2.5 right-2.5 bg-[#f06a60] text-white text-[10px] font-heading font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
-                          After
-                        </figcaption>
-                      </figure>
-                    </div>
-                    <div className="p-5 sm:p-6 pt-4 space-y-3 flex-1 flex flex-col">
-                      {t.review && (
-                        <blockquote className="text-xs sm:text-sm text-neutral-200 leading-relaxed border-l-2 border-[#f06a60] pl-3 line-clamp-4">
-                          &ldquo;{t.review}&rdquo;
-                        </blockquote>
-                      )}
-                      <div className="mt-auto pt-1">
-                        <p className="text-sm font-bold text-white">
-                          {t.firstName}{' '}
-                          <span className="font-normal text-neutral-400">· {t.area}</span>
-                        </p>
-                        {t.services.length > 0 && (
-                          <p className="text-[11px] text-neutral-500 mt-1 line-clamp-1">
-                            {t.services.slice(0, 2).join(' · ')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-        )}
 
         {/* SECTION: KENAPA HARUS MERAWAT SEPATU */}
         <section className="py-20 sm:py-24 bg-[#fdf8f1] border-t border-black/[0.05]">

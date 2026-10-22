@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getPromos,
+  getPromoById,
   createPromo,
   updatePromo,
   deletePromo,
 } from '@/lib/db';
+import { validatePromoDraft } from '@/lib/promo';
+
+// Field opsional: null/kosong = hapus fieldnya (spread + JSON.stringify menghapus key).
+const OPTIONAL_KEYS = [
+  'minOrderAmount',
+  'maxDiscount',
+  'validUntil',
+  'usageLimit',
+  'usageLimitPerCustomer',
+] as const;
 
 export async function GET() {
   try {
@@ -35,25 +46,21 @@ export async function POST(req: NextRequest) {
       isActive,
     } = body;
 
-    if (!code || typeof code !== 'string' || !code.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'Kode promo wajib diisi' },
-        { status: 400 }
-      );
-    }
-
-    if (!discountType || (discountType !== 'PERCENT' && discountType !== 'FIXED')) {
-      return NextResponse.json(
-        { success: false, error: 'Tipe diskon harus PERCENT atau FIXED' },
-        { status: 400 }
-      );
-    }
-
-    if (typeof discountValue !== 'number' || discountValue <= 0) {
-      return NextResponse.json(
-        { success: false, error: 'Nilai diskon harus berupa angka lebih dari 0' },
-        { status: 400 }
-      );
+    const error = validatePromoDraft(
+      {
+        code: typeof code === 'string' ? code : '',
+        discountType,
+        discountValue,
+        minOrderAmount,
+        maxDiscount,
+        validUntil,
+        usageLimit,
+        usageLimitPerCustomer,
+      },
+      { others: getPromos() }
+    );
+    if (error) {
+      return NextResponse.json({ success: false, error }, { status: 400 });
     }
 
     const created = createPromo({
@@ -94,6 +101,39 @@ export async function PATCH(req: NextRequest) {
         { success: false, error: 'ID promo wajib disertakan' },
         { status: 400 }
       );
+    }
+
+    const existing = getPromoById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Kode promo tidak ditemukan' },
+        { status: 404 }
+      );
+    }
+
+    // Nilai yang tidak dikirim di body dipakai dari promo yang tersimpan.
+    const error = validatePromoDraft(
+      {
+        code: updateData.code ?? existing.code,
+        discountType: updateData.discountType ?? existing.discountType,
+        discountValue: updateData.discountValue ?? existing.discountValue,
+        minOrderAmount: updateData.minOrderAmount,
+        maxDiscount: updateData.maxDiscount,
+        validUntil: updateData.validUntil,
+        usageLimit: updateData.usageLimit,
+        usageLimitPerCustomer: updateData.usageLimitPerCustomer,
+      },
+      { others: getPromos(), editingId: id, currentUsedCount: existing.usedCount }
+    );
+    if (error) {
+      return NextResponse.json({ success: false, error }, { status: 400 });
+    }
+
+    // Hanya key yang benar-benar dikirim yang disentuh, supaya field lain tidak ikut terhapus.
+    for (const key of OPTIONAL_KEYS) {
+      if (key in updateData && (updateData[key] === null || updateData[key] === '')) {
+        updateData[key] = undefined;
+      }
     }
 
     const updated = updatePromo(id, updateData);

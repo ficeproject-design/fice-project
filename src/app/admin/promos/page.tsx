@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { PromoCode, PromoDiscountType } from '@/lib/types';
 import { formatRupiah } from '@/lib/invoice';
-import { isPromoExpired } from '@/lib/promo';
+import { isPromoExpired, promoDiscountLabel } from '@/lib/promo';
 
 function getPromoHealth(p: PromoCode): 'ACTIVE' | 'EXPIRED_OR_EXHAUSTED' | 'INACTIVE' {
   const isExpired = isPromoExpired(p.validUntil);
@@ -52,6 +52,7 @@ export default function AdminPromosPage() {
   const [maxDiscount, setMaxDiscount] = useState<number | ''>(25000);
   const [validUntil, setValidUntil] = useState('');
   const [usageLimit, setUsageLimit] = useState<number | ''>('');
+  const [usageLimitPerCustomer, setUsageLimitPerCustomer] = useState<number | ''>('');
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -87,6 +88,7 @@ export default function AdminPromosPage() {
     setMaxDiscount(20000);
     setValidUntil('');
     setUsageLimit('');
+    setUsageLimitPerCustomer('');
     setDescription('');
     setIsActive(true);
     setFormError(null);
@@ -103,6 +105,7 @@ export default function AdminPromosPage() {
     setMaxDiscount(promo.maxDiscount ?? '');
     setValidUntil(promo.validUntil ?? '');
     setUsageLimit(promo.usageLimit ?? '');
+    setUsageLimitPerCustomer(promo.usageLimitPerCustomer ?? '');
     setDescription(promo.description ?? '');
     setIsActive(promo.isActive);
     setFormError(null);
@@ -176,11 +179,13 @@ export default function AdminPromosPage() {
         code: code.trim().toUpperCase(),
         discountType,
         discountValue: Number(discountValue),
-        minOrderAmount: minOrderAmount ? Number(minOrderAmount) : undefined,
-        maxDiscount: discountType === 'PERCENT' && maxDiscount ? Number(maxDiscount) : undefined,
-        validUntil: validUntil || undefined,
-        usageLimit: usageLimit ? Number(usageLimit) : undefined,
-        description: description.trim() || undefined,
+        // null = kosongkan field (bukan diabaikan) supaya admin bisa hapus ketentuan lama
+        minOrderAmount: minOrderAmount === '' ? null : Number(minOrderAmount),
+        maxDiscount: discountType === 'PERCENT' && maxDiscount !== '' ? Number(maxDiscount) : null,
+        validUntil: validUntil || null,
+        usageLimit: usageLimit === '' ? null : Number(usageLimit),
+        usageLimitPerCustomer: usageLimitPerCustomer === '' ? null : Number(usageLimitPerCustomer),
+        description: description.trim() || null,
         isActive,
       };
 
@@ -479,6 +484,11 @@ export default function AdminPromosPage() {
                               : 'Tidak Ada Batas Waktu'}
                           </span>
                         </div>
+                        {p.usageLimitPerCustomer && (
+                          <div className="text-[11px] text-slate-500">
+                            Maks. {p.usageLimitPerCustomer}x per pelanggan
+                          </div>
+                        )}
                         {isExpired && (
                           <span className="inline-block text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                             Kedaluwarsa
@@ -711,7 +721,7 @@ export default function AdminPromosPage() {
               )}
 
               {/* Kuota & Tanggal Kadaluarsa */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
                     Batas Kuota Pemakaian (Opsional)
@@ -724,6 +734,25 @@ export default function AdminPromosPage() {
                     placeholder="Kosongkan jika unlimited"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0d1526]"
                   />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Batas per Pelanggan (Opsional)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={usageLimitPerCustomer}
+                    onChange={(e) =>
+                      setUsageLimitPerCustomer(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    placeholder="Contoh: 1"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0d1526]"
+                  />
+                  <span className="text-[11px] text-slate-500 block mt-1">
+                    Dihitung dari nomor WA. Contoh: 1 = sekali per pelanggan.
+                  </span>
                 </div>
 
                 <div>
@@ -751,6 +780,21 @@ export default function AdminPromosPage() {
                   placeholder="Contoh: Diskon khusus pelanggan baru Fice Shoes Care"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0d1526]"
                 />
+              </div>
+
+              {/* Preview label dropdown customer */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="font-bold text-slate-500 block mb-1">
+                  Tampilan di dropdown customer
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {promoDiscountLabel({
+                    code: code.trim() || 'KODEPROMO',
+                    discountType,
+                    discountValue: Number(discountValue) || 0,
+                    maxDiscount: maxDiscount === '' ? undefined : Number(maxDiscount),
+                  })}
+                </span>
               </div>
 
               {/* Status Aktif Switch */}

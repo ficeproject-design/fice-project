@@ -16,6 +16,7 @@ import {
 import { Service, ServiceCategory } from '@/lib/types';
 import { formatRupiah } from '@/lib/invoice';
 import { readCart, writeCart } from '@/lib/cart';
+import { groupServices, priceRange } from '@/lib/variants';
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   shoes: 'Sepatu',
@@ -70,7 +71,10 @@ export default function ServiceCatalog() {
     });
   };
 
-  const shown = services.filter((s) => category === 'all' || s.category === category);
+  // Layanan dengan variantGroup sama digabung jadi satu kartu (contoh: Bag Deep Clean S/M/L).
+  const shownGroups = groupServices(
+    services.filter((s) => category === 'all' || s.category === category)
+  );
   const itemsCount = Object.values(cart).reduce((s, q) => s + q, 0);
   const subtotal = services.reduce((s, srv) => s + (cart[srv.id] || 0) * srv.price, 0);
 
@@ -122,7 +126,7 @@ export default function ServiceCatalog() {
             Coba Lagi
           </button>
         </div>
-      ) : shown.length === 0 ? (
+      ) : shownGroups.length === 0 ? (
         <div className="py-24 text-center space-y-2">
           <ShoppingBag className="w-8 h-8 text-neutral-300 mx-auto" />
           <p className="text-sm font-bold text-[#0d1526]">Belum ada layanan di kategori ini.</p>
@@ -132,11 +136,16 @@ export default function ServiceCatalog() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {shown.map((srv) => {
-            const qty = cart[srv.id] || 0;
+          {shownGroups.map((group) => {
+            const srv = group.primary;
+            // Grup varian: qty = total semua varian; kalau ada >1 varian dengan qty,
+            // tampilkan ringkasan kecil di bawah harga.
+            const groupQty = group.variants.reduce((sum, v) => sum + (cart[v.id] || 0), 0);
+            const { min, max, hasRange } = priceRange(group.variants);
+            const qty = groupQty;
             return (
               <div
-                key={srv.id}
+                key={group.key}
                 role="link"
                 tabIndex={0}
                 aria-label={`Lihat detail ${srv.name}`}
@@ -170,12 +179,17 @@ export default function ServiceCatalog() {
                     {srv.name}
                   </h3>
                   <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    {srv.description}
+                    {group.isVariantGroup ? (srv.groupDescription || srv.description) : srv.description}
                   </p>
                   <p className="text-[11px] text-slate-500 inline-flex items-center gap-1 pt-1">
                     <Clock className="w-3.5 h-3.5 text-[#f06a60]" />
                     Perkiraan selesai {srv.estimatedDays}
                   </p>
+                  {group.isVariantGroup && (
+                    <p className="text-[11px] text-[#f06a60] font-bold pt-0.5">
+                      Tersedia ukuran: {group.variants.map((v) => v.variantLabel).join(' · ')}
+                    </p>
+                  )}
                 </div>
 
                 <div
@@ -185,14 +199,35 @@ export default function ServiceCatalog() {
                 >
                   <div>
                     <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">
-                      Tarif / item
+                      {hasRange ? 'Tarif mulai' : 'Tarif / item'}
                     </span>
                     <span className="font-heading font-black text-xl text-[#f06a60]">
-                      {formatRupiah(srv.price)}
+                      {hasRange
+                        ? `${formatRupiah(min)} – ${formatRupiah(max)}`
+                        : formatRupiah(min)}
                     </span>
+                    {group.isVariantGroup && groupQty > 0 && (
+                      <span className="block text-[10px] text-slate-500 mt-0.5">
+                        {groupQty} item di keranjang
+                      </span>
+                    )}
                   </div>
 
-                  {qty === 0 ? (
+                  {group.isVariantGroup ? (
+                    // Grup varian: jumlah diatur di halaman detail (per ukuran).
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/harga/${srv.id}`)}
+                      className={`inline-flex items-center gap-1.5 font-bold text-xs px-4 min-h-[44px] rounded-xl transition-colors cursor-pointer ${
+                        groupQty > 0
+                          ? 'bg-[#f06a60] hover:bg-[#0d1526] text-white'
+                          : 'bg-[#0d1526] hover:bg-[#f06a60] text-white'
+                      }`}
+                    >
+                      {groupQty > 0 ? 'Atur Jumlah' : 'Pilih Ukuran'}
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                  ) : qty === 0 ? (
                     <button
                       type="button"
                       onClick={() => setQty(srv.id, 1)}

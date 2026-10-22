@@ -10,6 +10,11 @@ export interface Service {
   price: number;
   icon?: string;
   popular?: boolean;
+  // Varian ukuran: service dengan variantGroup sama ditampilkan sebagai satu kartu,
+  // pemilihan ukuran dilakukan di halaman detail (contoh: bag S/M/L).
+  variantGroup?: string; // e.g. "bag-deep-clean"
+  variantLabel?: string; // e.g. "Small" | "Medium" | "Large"
+  groupDescription?: string; // Deskripsi generik untuk kartu gabungan varian
 }
 
 export type OrderStatus =

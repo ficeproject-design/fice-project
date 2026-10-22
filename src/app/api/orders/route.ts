@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     const subtotal = value.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-    let promoCode: string | undefined;
+let promoCode: string | undefined = undefined;
     let discountAmount = 0;
     if (value.promoCode) {
       // phone dipakai untuk cek batas pemakaian per pelanggan (mis. promo baru 1x)

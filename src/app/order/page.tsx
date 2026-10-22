@@ -21,7 +21,6 @@ import {
   Sparkles,
   Clock,
   Tag,
-  Ticket,
   X,
 } from 'lucide-react';
 import {
@@ -34,7 +33,9 @@ import {
 import { formatRupiah } from '@/lib/invoice';
 import { isValidPhone, PHONE_HINT } from '@/lib/phone';
 import { readCart, writeCart, clearCart } from '@/lib/cart';
+import { groupServices } from '@/lib/variants';
 import { Service, ServiceCategory, SystemSettings } from '@/lib/types';
+import { PromoOption, promoDiscountLabel } from '@/lib/promo';
 
 type PickupDateOption = ReturnType<typeof getAvailablePickupDates>[number];
 
@@ -165,7 +166,6 @@ export default function OrderPage() {
     // Keranjang berubah = nominal diskon lama tidak berlaku lagi; lepas promo
     // supaya total di layar tidak pernah beda dengan total dari server.
     setAppliedPromo(null);
-    setPromoSuccess(null);
     setSelectedItems((prev) => {
       const existing = prev[service.id];
       const newQty = Math.min(50, (existing?.quantity || 0) + delta);
@@ -214,67 +214,76 @@ export default function OrderPage() {
   const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Promo Code States
-  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoList, setPromoList] = useState<PromoOption[]>([]);
+  const [promoListError, setPromoListError] = useState<string | null>(null);
   const [appliedPromo, setAppliedPromo] = useState<{
     code: string;
     discountAmount: number;
     description?: string;
   } | null>(null);
-  const [promoLoading, setPromoLoading] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
-  const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
 
   const discountAmount = appliedPromo ? appliedPromo.discountAmount : 0;
   const finalTotal = Math.max(0, subtotal - discountAmount);
 
-  const handleApplyPromo = async () => {
-    if (!promoCodeInput.trim()) return;
-    setPromoLoading(true);
-    setPromoError(null);
-    setPromoSuccess(null);
+  // Daftar promo dihitung di server: subtotal + nomor WA menentukan mana yang eligible.
+  useEffect(() => {
+    if (subtotal <= 0) return;
+    let cancelled = false;
 
-    try {
-      const res = await fetch('/api/promos/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: promoCodeInput.trim(),
-          subtotal,
-          phone: customerPhone.trim(),
-        }),
-      });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        setPromoError(json.message || 'Invalid promo code.');
-        setAppliedPromo(null);
-      } else {
-        setAppliedPromo({
-          code: json.data.code,
-          discountAmount: json.data.discountAmount,
-          description: json.data.description,
-        });
-        setPromoSuccess(json.data.message || 'Promo code applied successfully!');
-        setPromoCodeInput(json.data.code);
+    (async () => {
+      const params = new URLSearchParams({ subtotal: String(subtotal) });
+      if (customerPhone.trim()) params.set('phone', customerPhone.trim());
+      try {
+        const res = await fetch(`/api/promos?${params}`);
+        const json = await res.json();
+        if (cancelled) return;
+        if (!res.ok || !json.success) {
+          setPromoList([]);
+          setPromoListError('Gagal memuat kode promo.');
+          return;
+        }
+        setPromoListError(null);
+        setPromoList(json.data);
+        // Promo yang sudah dipakai bisa batal eligible kalau itemnya dikurangi.
+        setAppliedPromo((prev) =>
+          prev && !json.data.some((p: PromoOption) => p.code === prev.code && p.eligible)
+            ? null
+            : prev
+        );
+      } catch {
+        if (cancelled) return;
+        setPromoList([]);
+        setPromoListError('Gagal memuat kode promo.');
       }
-    } catch (err) {
-      setPromoError('Failed to validate promo code. Please try again.');
-    } finally {
-      setPromoLoading(false);
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subtotal, customerPhone]);
+
+  const handleSelectPromo = (code: string) => {
+    const option = promoList.find((p) => p.code === code);
+    if (!option || !option.eligible) return;
+    setAppliedPromo({
+      code: option.code,
+      discountAmount: option.discountAmount,
+      description: option.description,
+    });
   };
 
   const handleRemovePromo = () => {
     setAppliedPromo(null);
-    setPromoCodeInput('');
-    setPromoSuccess(null);
-    setPromoError(null);
   };
 
-  const filteredServices = services.filter((s) => {
-    if (categoryFilter === 'all') return true;
-    return s.category === categoryFilter;
-  });
+  // Label opsi: kode + potongan, plus alasan kalau syaratnya belum terpenuhi.
+  const promoOptionLabel = (p: PromoOption) =>
+    p.eligible ? promoDiscountLabel(p) : `${promoDiscountLabel(p)} · ${p.reason}`;
+
+  // Layanan varian (mis. Bag Deep Clean S/M/L) digabung jadi satu kartu.
+  const filteredGroups = groupServices(
+    services.filter((s) => categoryFilter === 'all' || s.category === categoryFilter)
+  );
 
   const eligibility = checkOrderEligibility(
     latitude,
@@ -576,13 +585,17 @@ export default function OrderPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredServices.map((srv) => {
-                      const qty = selectedItems[srv.id]?.quantity || 0;
+                    {filteredGroups.map((group) => {
+                      const srv = group.primary;
+                      const groupQty = group.variants.reduce(
+                        (sum, v) => sum + (selectedItems[v.id]?.quantity || 0),
+                        0
+                      );
                       return (
                         <div
-                          key={srv.id}
+                          key={group.key}
                           className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between ${
-                            qty > 0
+                            groupQty > 0
                               ? 'border-[#f06a60] bg-[#fff8f8] ring-1 ring-[#f06a60]/20'
                               : 'border-black/[0.08] hover:border-black/20 bg-white'
                           }`}
@@ -600,40 +613,94 @@ export default function OrderPage() {
                               {srv.name}
                             </h3>
                             <p className="text-xs text-neutral-600 leading-relaxed line-clamp-2">
-                              {srv.description}
+                              {group.isVariantGroup
+                                ? srv.groupDescription || srv.description
+                                : srv.description}
                             </p>
                           </div>
 
-                          <div className="pt-3 mt-3 border-t border-black/[0.05] flex items-center justify-between gap-3">
-                            <div className="text-sm font-heading font-bold text-[#f06a60]">
-                              {formatRupiah(srv.price)} <span className="text-neutral-400 text-xs font-normal font-body">/ item</span>
+                          {group.isVariantGroup ? (
+                            /* Varian ukuran: satu baris kontrol per ukuran */
+                            <div className="pt-3 mt-3 border-t border-black/[0.05] space-y-2.5">
+                              <p className="text-[10px] uppercase font-bold tracking-wider text-neutral-500">
+                                Pilih ukuran &amp; jumlah
+                              </p>
+                              {group.variants.map((v) => {
+                                const vQty = selectedItems[v.id]?.quantity || 0;
+                                return (
+                                  <div
+                                    key={v.id}
+                                    className="flex items-center justify-between gap-3"
+                                  >
+                                    <div className="min-w-0">
+                                      <span className="block font-heading font-bold text-xs uppercase text-[#0d1526]">
+                                        {v.variantLabel}
+                                      </span>
+                                      <span className="block text-[11px] text-[#f06a60] font-bold">
+                                        {formatRupiah(v.price)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(v, -1)}
+                                        disabled={vQty === 0}
+                                        aria-label={`Kurangi ${v.name} ${v.variantLabel}`}
+                                        className="w-8 h-8 rounded-full border border-black/20 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-25 transition-all cursor-pointer"
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <span className="w-6 text-center font-heading font-bold text-sm text-[#0d1526]">
+                                        {vQty}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(v, 1)}
+                                        aria-label={`Tambah ${v.name} ${v.variantLabel}`}
+                                        className="w-8 h-8 rounded-full bg-[#0d1526] hover:bg-[#f06a60] text-white flex items-center justify-center transition-all cursor-pointer"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
+                          ) : (
+                            <div className="pt-3 mt-3 border-t border-black/[0.05] flex items-center justify-between gap-3">
+                              <div className="text-sm font-heading font-bold text-[#f06a60]">
+                                {formatRupiah(srv.price)}{' '}
+                                <span className="text-neutral-400 text-xs font-normal font-body">
+                                  / item
+                                </span>
+                              </div>
 
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-2.5 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => handleQuantityChange(srv, -1)}
-                                disabled={qty === 0}
-                                className="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-25 transition-all cursor-pointer"
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="w-7 text-center font-heading font-bold text-base text-[#0d1526]">
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleQuantityChange(srv, 1)}
-                                className="w-9 h-9 rounded-full bg-[#0d1526] hover:bg-[#f06a60] text-white flex items-center justify-center shadow-xs transition-all cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </button>
+                              {/* Quantity Controls */}
+                              <div className="flex items-center gap-2.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuantityChange(srv, -1)}
+                                  disabled={groupQty === 0}
+                                  className="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-25 transition-all cursor-pointer"
+                                >
+                                  <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="w-7 text-center font-heading font-bold text-base text-[#0d1526]">
+                                  {groupQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuantityChange(srv, 1)}
+                                  className="w-9 h-9 rounded-full bg-[#0d1526] hover:bg-[#f06a60] text-white flex items-center justify-center shadow-xs transition-all cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          )}
 
-                          {/* Notes per item */}
-                          {qty > 0 && (
+                          {/* Notes per item (khusus non-varian; varian pakai catatan terpisah di langkah berikutnya) */}
+                          {!group.isVariantGroup && groupQty > 0 && (
                             <div className="mt-3 pt-3 border-t border-black/[0.06]">
                               <label className="text-[11px] font-bold text-neutral-600 block mb-1">
                                 Special Notes / Color / Size:
@@ -1057,31 +1124,7 @@ export default function OrderPage() {
                     )}
                   </div>
 
-                  {!appliedPromo ? (
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          type="text"
-                          value={promoCodeInput}
-                          onChange={(e) => {
-                            setPromoCodeInput(e.target.value.toUpperCase());
-                            setPromoError(null);
-                          }}
-                          placeholder="Enter Promo Code (e.g. FICEBARU)"
-                          className="w-full text-xs font-mono font-bold uppercase pl-9 pr-3 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-[#fdf8f1]"
-                        />
-                        <Ticket className="w-4 h-4 text-neutral-400 absolute left-3 top-3.5" />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleApplyPromo}
-                        disabled={promoLoading || !promoCodeInput.trim()}
-                        className="bg-[#0d1526] hover:bg-[#f06a60] text-white font-bold text-xs px-5 py-3 rounded-2xl transition-all disabled:opacity-40 cursor-pointer shrink-0"
-                      >
-                        {promoLoading ? 'Checking...' : 'Apply'}
-                      </button>
-                    </div>
-                  ) : (
+                  {appliedPromo ? (
                     <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
@@ -1112,19 +1155,29 @@ export default function OrderPage() {
                         <X className="w-4 h-4" />
                       </button>
                     </div>
+                  ) : (
+                    <select
+                      value=""
+                      onChange={(e) => handleSelectPromo(e.target.value)}
+                      disabled={promoList.length === 0}
+                      aria-label="Pilih kode promo"
+                      className="w-full text-xs font-semibold px-3 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#f06a60] bg-[#fdf8f1] disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">
+                        {promoList.length === 0
+                          ? 'Belum ada kode promo tersedia'
+                          : 'Pilih kode promo (opsional)'}
+                      </option>
+                      {promoList.map((p) => (
+                        <option key={p.code} value={p.code} disabled={!p.eligible}>
+                          {promoOptionLabel(p)}
+                        </option>
+                      ))}
+                    </select>
                   )}
 
-                  {promoError && (
-                    <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      {promoError}
-                    </p>
-                  )}
-                  {promoSuccess && !promoError && (
-                    <p className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                      {promoSuccess}
-                    </p>
+                  {promoListError && (
+                    <p className="text-[11px] font-semibold text-rose-600">{promoListError}</p>
                   )}
                 </div>
 

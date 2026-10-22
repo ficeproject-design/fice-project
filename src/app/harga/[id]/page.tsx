@@ -19,9 +19,11 @@ import {
   Plus,
   Minus,
   FileText,
+  ShoppingCart,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/invoice';
 import { readCart, writeCart } from '@/lib/cart';
+import { getVariants, displayName } from '@/lib/variants';
 import type { Service } from '@/lib/types';
 import { serviceImage } from '@/lib/service-images';
 
@@ -65,11 +67,31 @@ export default function ServiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [qty, setQty] = useState(1);
+  // Feedback setelah "Masukkan Keranjang" (tidak pindah halaman).
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  // Varian ukuran: pilihan user disimpan bersama id URL asalnya, supaya saat pindah
+  // layanan (URL berubah) pilihan otomatis kembali ke varian default — tanpa effect.
+  const [variantChoice, setVariantChoice] = useState<{ forId: string; id: string } | null>(null);
+  const activeId = variantChoice && variantChoice.forId === id ? variantChoice.id : id;
+  const setActiveId = (nextId: string) => setVariantChoice({ forId: id, id: nextId });
+
+  const handleAddToCart = () => {
+    if (!service) return;
+    const targetId = activeId || service.id;
+    const cart = readCart();
+    cart[targetId] = Math.min(50, (cart[targetId] || 0) + qty);
+    writeCart(cart);
+    setAddedToCart(true);
+    window.setTimeout(() => setAddedToCart(false), 2600);
+  };
 
   const handleAddAndOrder = () => {
     if (!service) return;
+    // activeId = varian yang dipilih user (default: service dari URL).
+    const targetId = activeId || service.id;
     const cart = readCart();
-    cart[service.id] = Math.min(50, (cart[service.id] || 0) + qty);
+    cart[targetId] = Math.min(50, (cart[targetId] || 0) + qty);
     writeCart(cart);
     router.push('/order');
   };
@@ -136,9 +158,22 @@ export default function ServiceDetailPage() {
 
   const imageUrl = serviceImage(service.id, 1400);
   const included = WHATS_INCLUDED[service.category] || WHATS_INCLUDED.shoes;
+  // Related: kategori sama, kecuali dirinya & varian dari grup yang sama.
   const related = allServices
-    .filter((s) => s.category === service.category && s.id !== service.id)
+    .filter(
+      (s) =>
+        s.category === service.category &&
+        s.id !== service.id &&
+        (!service.variantGroup || s.variantGroup !== service.variantGroup)
+    )
     .slice(0, 3);
+  // Varian ukuran (mis. Bag Deep Clean S/M/L). Urut harga menaik.
+  const variants = getVariants(allServices, service);
+  const hasVariants = variants.length > 1;
+  const activeVariant = hasVariants
+    ? variants.find((v) => v.id === activeId) || service
+    : service;
+  const displayService = activeVariant;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fdf8f1] text-[#0d1526]">
@@ -153,7 +188,7 @@ export default function ServiceDetailPage() {
               <span>/</span>
               <Link href="/harga" className="hover:text-[#0d1526] transition-colors">Services & Pricing</Link>
               <span>/</span>
-              <span className="text-[#0d1526] font-medium">{service.name}</span>
+              <span className="text-[#0d1526] font-medium">{displayService.name}</span>
             </nav>
           </div>
         </section>
@@ -164,95 +199,182 @@ export default function ServiceDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start">
 
               {/* LEFT: Large Image */}
-              <div className="rounded-[32px] overflow-hidden bg-[#f2ece5] aspect-[4/3] lg:aspect-auto lg:h-[520px]">
-                <img
-                  src={imageUrl}
-                  alt={service.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="space-y-4">
+                <div className="rounded-[32px] overflow-hidden bg-[#f2ece5] aspect-[4/3] lg:aspect-auto lg:h-[520px]">
+                  <img
+                    src={imageUrl}
+                    alt={displayName(displayService)}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {hasVariants && (
+                  <p className="text-xs text-neutral-500 text-center">
+                    Harga menyesuaikan ukuran yang dipilih — lihat opsi{' '}
+                    <span className="font-bold text-[#0d1526]">
+                      {variants.map((v) => v.variantLabel).join(' / ')}
+                    </span>{' '}
+                    di samping.
+                  </p>
+                )}
               </div>
 
               {/* RIGHT: Service Info */}
               <div className="space-y-6 lg:sticky lg:top-28">
-                {/* Category + Badge */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs uppercase font-heading font-bold tracking-wider text-[#f06a60] bg-[#f06a60]/10 px-3 py-1 rounded-full border border-[#f06a60]/20">
-                    {CATEGORY_LABELS[service.category]}
-                  </span>
-                  {service.popular && (
-                    <span className="bg-[#f06a60] text-white text-[10px] font-heading font-black uppercase px-2.5 py-1 rounded-full">
-                      Populer
-                    </span>
-                  )}
-                </div>
+                {/* Back to catalog — di atas judul */}
+                <Link
+                  href="/harga"
+                  className="inline-flex items-center gap-2 bg-[#f2ece5] hover:bg-[#eae2d9] text-[#0d1526] font-heading font-bold text-xs sm:text-sm uppercase tracking-normal px-4 py-2.5 rounded-xl border border-black/[0.06] transition-all duration-300"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Semua Layanan
+                </Link>
 
                 {/* Name */}
                 <h1 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-5xl uppercase text-[#0d1526] leading-tight">
-                  {service.name}
+                  {displayService.name}
                 </h1>
 
-                {/* Price + Duration */}
-                <div className="flex flex-wrap items-end gap-4">
-                  <div>
-                    <p className="text-xs text-neutral-500 font-bold uppercase tracking-wider mb-1">Harga / item</p>
-                    <p className="font-heading font-black text-4xl sm:text-5xl text-[#f06a60]">
-                      {formatRupiah(service.price)}
+                {/* Size / Variant Selector */}
+                {hasVariants && (
+                  <div className="space-y-2.5">
+                    <p className="text-xs text-neutral-500 font-bold uppercase tracking-wider">
+                      Pilih Ukuran
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2 bg-[#f2ece5] px-4 py-2.5 rounded-2xl border border-black/[0.04]">
-                    <Clock className="w-5 h-5 text-[#f06a60]" />
-                    <div>
-                      <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Estimasi</p>
-                      <p className="text-sm font-heading font-bold text-[#0d1526]">{service.estimatedDays}</p>
+                    <div className="flex flex-wrap gap-2.5" role="group" aria-label="Pilih ukuran">
+                      {variants.map((v) => {
+                        const isActive = v.id === activeVariant.id;
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => setActiveId(v.id)}
+                            aria-pressed={isActive}
+                            className={`px-5 py-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                              isActive
+                                ? 'bg-[#0d1526] text-white border-[#0d1526] shadow-sm'
+                                : 'bg-white text-[#0d1526] border-black/15 hover:border-[#f06a60]'
+                            }`}
+                          >
+                            <span className="block font-heading font-bold text-sm uppercase tracking-normal">
+                              {v.variantLabel}
+                            </span>
+                            <span
+                              className={`block text-[11px] mt-0.5 ${
+                                isActive ? 'text-[#f06a60]' : 'text-neutral-500'
+                              }`}
+                            >
+                              {formatRupiah(v.price)}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Description */}
-                <p className="text-base text-neutral-600 leading-relaxed font-body max-w-xl">
-                  {service.description}
-                </p>
+                {/* Price + Duration */}
+                <div>
+                  <p className="text-xs text-neutral-500 font-bold uppercase tracking-wider mb-1">Harga / item</p>
+                  <p className="font-heading font-black text-4xl sm:text-5xl text-[#f06a60]">
+                    {formatRupiah(activeVariant.price)}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2.5">
+                    <Clock className="w-4 h-4 text-[#f06a60] shrink-0" />
+                    <span className="text-xs text-neutral-500 font-bold uppercase tracking-wider">
+                      Estimasi
+                    </span>
+                    <span className="text-sm font-heading font-bold text-[#0d1526]">
+                      {activeVariant.estimatedDays}
+                    </span>
+                  </div>
+                </div>
 
                 {/* Qty + CTA Buttons */}
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <div className="inline-flex items-center gap-3 bg-white border border-black/10 rounded-2xl px-3 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setQty((q) => Math.max(1, q - 1))}
-                      disabled={qty <= 1}
-                      className="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-30 transition-all cursor-pointer"
-                      aria-label="Kurangi jumlah"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-heading font-bold text-lg text-[#0d1526]">
-                      {qty}
+                <div className="space-y-3 pt-2">
+                  {/* Qty selector */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-neutral-500 font-bold uppercase tracking-wider">
+                      Jumlah
                     </span>
+                    <div className="inline-flex items-center gap-3 bg-white border border-black/10 rounded-2xl px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        disabled={qty <= 1}
+                        className="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-30 transition-all cursor-pointer"
+                        aria-label="Kurangi jumlah"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center font-heading font-bold text-lg text-[#0d1526]">
+                        {qty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => Math.min(50, q + 1))}
+                        className="w-9 h-9 rounded-full bg-[#0d1526] hover:bg-[#f06a60] text-white flex items-center justify-center transition-all cursor-pointer"
+                        aria-label="Tambah jumlah"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CTA: stack full-width di mobile, sejajar di sm+ */}
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="button"
-                      onClick={() => setQty((q) => Math.min(50, q + 1))}
-                      className="w-9 h-9 rounded-full bg-[#0d1526] hover:bg-[#f06a60] text-white flex items-center justify-center transition-all cursor-pointer"
-                      aria-label="Tambah jumlah"
+                      onClick={handleAddToCart}
+                      className={`group w-full sm:w-auto inline-flex items-center justify-center gap-2 font-heading font-bold text-base uppercase tracking-normal px-7 py-3.5 rounded-2xl border transition-all duration-300 active:scale-95 cursor-pointer ${
+                        addedToCart
+                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          : 'bg-white border-[#0d1526] text-[#0d1526] hover:bg-[#0d1526] hover:text-white'
+                      }`}
                     >
-                      <Plus className="w-4 h-4" />
+                      {addedToCart ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span>Masuk Keranjang</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-5 h-5" />
+                          <span>Masukkan Keranjang</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddAndOrder}
+                      className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 cursor-pointer"
+                    >
+                      <span>
+                        Pesan Sekarang
+                        {hasVariants && activeVariant.variantLabel
+                          ? ` — ${activeVariant.variantLabel}`
+                          : ''}
+                      </span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddAndOrder}
-                    className="group inline-flex items-center gap-2 bg-[#f06a60] hover:bg-[#0d1526] text-white font-heading font-bold text-base uppercase tracking-normal px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 cursor-pointer"
-                  >
-                    <span>Pesan Sekarang</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                  <Link
-                    href="/harga"
-                    className="inline-flex items-center gap-2 bg-[#f2ece5] hover:bg-[#eae2d9] text-[#0d1526] font-heading font-bold text-base uppercase tracking-normal px-7 py-3.5 rounded-2xl border border-black/[0.06] transition-all duration-300"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Semua Layanan
-                  </Link>
                 </div>
+
+                {/* Konfirmasi + jalan ke keranjang setelah "Masukkan Keranjang" */}
+                {addedToCart && (
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {qty}× {displayName(activeVariant)} masuk keranjang
+                    </span>
+                    <Link
+                      href="/order"
+                      className="inline-flex items-center gap-1 font-heading font-bold uppercase tracking-normal text-[#f06a60] hover:text-[#0d1526] border-b-2 border-[#f06a60] pb-0.5 transition-colors"
+                    >
+                      Lihat Keranjang &amp; Checkout
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                )}
 
                 {/* Trust Badges */}
                 <div className="flex flex-wrap gap-3 pt-2">
@@ -283,10 +405,10 @@ export default function ServiceDetailPage() {
                 Deskripsi Layanan
               </div>
               <h2 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl uppercase text-[#0d1526]">
-                Tentang {service.name}
+                Tentang {displayName(displayService)}
               </h2>
               <p className="text-base sm:text-lg text-neutral-600 leading-relaxed font-body">
-                {service.longDescription || service.description}
+                {activeVariant.longDescription || activeVariant.description}
               </p>
             </div>
           </div>

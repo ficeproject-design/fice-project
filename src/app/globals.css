@@ -131,26 +131,6 @@ h4.uppercase, h5.uppercase, h6.uppercase {
   letter-spacing: 0;
 }
 
-/* Sparkles marquee continuous loop */
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee 30s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
 /* Service cards auto-scroll carousel */
 @keyframes carousel-scroll {
   0% {

@@ -11,9 +11,9 @@ import {
   PromoCode,
 } from './types';
 import { DEFAULT_WORKSHOP_COORDS } from './haversine';
-import { generateInvoiceNumber, formatRupiah } from './invoice';
+import { generateInvoiceNumber } from './invoice';
 import { cleanPhoneDigits, normalizeIdPhone } from './phone';
-import { computeDiscount, isPromoExpired } from './promo';
+import { evaluatePromo, rankPromos, PromoOption } from './promo';
 import { shouldSeedDemo } from './seed';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'db.json');
@@ -84,33 +84,40 @@ const DEFAULT_SERVICES: Service[] = [
   {
     id: 'srv-bag-small',
     category: 'bag',
-    name: 'Bag Deep Clean (Small)',
+    name: 'Bag Deep Clean',
     description: 'Pembersihan tas ukuran kecil (clutch, waist bag, mini sling bag).',
     longDescription:
       'Clutch, waist bag, dan mini sling bag dibersihkan menyeluruh luar dan dalam. Ukurannya yang kecil justru butuh ketelitian karena banyak detail seperti resleting, kantong kecil, dan jahitan tepi. Tas kecil favorit Anda kembali bersih dan siap dipakai.',
     estimatedDays: '3 - 4 Hari',
     price: 65000,
+    variantGroup: 'bag-deep-clean',
+    variantLabel: 'Small',
+    groupDescription: 'Pembersihan menyeluruh untuk semua ukuran tas: clutch & sling bag (S), backpack & tote bag (M), hingga travel bag & duffel (L).',
   },
   {
     id: 'srv-bag-medium',
     category: 'bag',
-    name: 'Bag Deep Clean (Medium)',
+    name: 'Bag Deep Clean',
     description: 'Pembersihan tas ukuran sedang (backpack standar, shoulder bag, tote bag).',
     longDescription:
       'Ransel harian, shoulder bag, dan tote bag menampung debu dan noda dari pemakaian setiap hari. Kami membersihkan seluruh permukaan, bagian dalam, tali, dan aksennya satu per satu. Cocok untuk tas kerja, tas kuliah, dan tas traveling ringan.',
     estimatedDays: '3 - 4 Hari',
     price: 85000,
     popular: true,
+    variantGroup: 'bag-deep-clean',
+    variantLabel: 'Medium',
   },
   {
     id: 'srv-bag-large',
     category: 'bag',
-    name: 'Bag Deep Clean (Large)',
+    name: 'Bag Deep Clean',
     description: 'Pembersihan tas ukuran besar (travel bag, duffel, backpack gunung, tote bag besar).',
     longDescription:
       'Travel bag, duffel, dan carrier gunung berukuran besar dan sering terpapar debu perjalanan. Kami membersihkan seluruh bagiannya termasuk kompartemen dalam dan tali ransel yang tebal. Tas besar Anda kembali segar dan siap untuk perjalanan berikutnya.',
     estimatedDays: '3 - 4 Hari',
     price: 110000,
+    variantGroup: 'bag-deep-clean',
+    variantLabel: 'Large',
   },
   // Accessories
   {
@@ -767,12 +774,24 @@ function writeDb(data: DatabaseSchema): void {
 }
 
 // Service Methods
-// ponytail: db.json lama tidak punya longDescription (seed sekali saat file dibuat),
+// ponytail: db.json lama tidak punya longDescription / variantGroup (seed sekali saat file dibuat),
 // jadi merge dari DEFAULT_SERVICES saat baca, tanpa menimpa data yang sudah ada.
 function withLongDescription(s: Service): Service {
-  if (s.longDescription) return s;
   const fallback = DEFAULT_SERVICES.find((d) => d.id === s.id);
-  return fallback?.longDescription ? { ...s, longDescription: fallback.longDescription } : s;
+  if (!fallback) return s;
+  const merged: Service = { ...s };
+  if (!merged.longDescription && fallback.longDescription) {
+    merged.longDescription = fallback.longDescription;
+  }
+  if (!merged.variantGroup && fallback.variantGroup) {
+    merged.variantGroup = fallback.variantGroup;
+    merged.variantLabel = fallback.variantLabel;
+    merged.name = fallback.name;
+  }
+  if (!merged.groupDescription && fallback.groupDescription) {
+    merged.groupDescription = fallback.groupDescription;
+  }
+  return merged;
 }
 
 export function getServices(): Service[] {
@@ -1115,6 +1134,10 @@ export function getPromos(): PromoCode[] {
   );
 }
 
+export function getPromoById(id: string): PromoCode | undefined {
+  return (readDb().promos || []).find((p) => p.id === id);
+}
+
 export function createPromo(
   data: Omit<PromoCode, 'id' | 'usedCount' | 'createdAt'>
 ): PromoCode {
@@ -1184,57 +1207,15 @@ export function validatePromoCode(
     };
   }
 
-  if (!promo.isActive) {
-    return {
-      valid: false,
-      message: 'Kode promo ini sedang tidak aktif.',
-    };
-  }
+  const result = evaluatePromo(promo, subtotal, phone);
+  return result.valid
+    ? { valid: true, discountAmount: result.discountAmount, promo, message: result.message }
+    : { valid: false, message: result.message };
+}
 
-  // Check expiration date (WIB, inklusif sampai 23:59)
-  if (isPromoExpired(promo.validUntil)) {
-    return {
-      valid: false,
-      message: `Masa berlaku kode promo ini telah berakhir pada ${promo.validUntil}.`,
-    };
-  }
-
-  // Check usage limit
-  if (promo.usageLimit && promo.usedCount >= promo.usageLimit) {
-    return {
-      valid: false,
-      message: 'Kuota penggunaan kode promo ini sudah habis.',
-    };
-  }
-
-  // Check per-customer limit (e.g. promo khusus pelanggan baru, 1x per nomor WA)
-  if (promo.usageLimitPerCustomer && phone) {
-    const key = normalizeIdPhone(phone);
-    const alreadyUsed = key !== '' && (promo.usedBy || []).includes(key);
-    if (alreadyUsed) {
-      return {
-        valid: false,
-        message: `Nomor Anda sudah pernah memakai kode ${promo.code}. Promo ini maksimal ${promo.usageLimitPerCustomer}x per pelanggan.`,
-      };
-    }
-  }
-
-  // Check min order amount
-  if (promo.minOrderAmount && subtotal < promo.minOrderAmount) {
-    return {
-      valid: false,
-      message: `Kode promo ini membutuhkan minimal belanja ${formatRupiah(promo.minOrderAmount)} (Total saat ini: ${formatRupiah(subtotal)}).`,
-    };
-  }
-
-  // Calculate discount
-  const discountAmount = computeDiscount(promo, subtotal);
-
-  return {
-    valid: true,
-    discountAmount,
-    promo,
-    message: `Kode ${promo.code} berhasil digunakan! Anda hemat ${formatRupiah(discountAmount)}.`,
-  };
+/** Promo aktif untuk dropdown halaman order: eligible dulu, sisanya tetap tampil + alasan. */
+export function listPromosForOrder(subtotal: number, phone?: string): PromoOption[] {
+  const promos = (readDb().promos || []).filter((p) => p.isActive);
+  return rankPromos(promos, subtotal, phone);
 }
 
